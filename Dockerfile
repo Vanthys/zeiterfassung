@@ -6,4 +6,4 @@ RUN npm run build
 WORKDIR /app
 RUN npm install --production
 RUN npm run build
-CMD ["node", "src/index.js"]
+CMD ["node", "server.js"]
