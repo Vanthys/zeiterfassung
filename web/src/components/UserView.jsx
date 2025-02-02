@@ -11,6 +11,8 @@ import {
 import axios from "axios";
 import EntryList from "./EntryList";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const UserView = () => {
     const cookies = new Cookies();
     const [user, setUser] = useState(cookies.get('user_id') ?? "");
@@ -23,7 +25,9 @@ const UserView = () => {
     useEffect(() => {
         const loadUsers = async () => {
             try {
-                const response = await axios.get("http://localhost:5000/api/users");
+                const response = await axios.get(
+                    API_URL + '/api/users'
+                );
                 setUsers([...response.data]);
             } catch (error) {
                 console.error("Error getting users: ", error)
@@ -36,7 +40,7 @@ const UserView = () => {
     useEffect(() => {
         const canStart = async () => {
             try {
-                const response = await axios.get("http://localhost:5000/api/canstart/" + user)
+                const response = await axios.get(API_URL + '/api/canstart/' + user)
                 setIsStart(response.data.canStart)
             } catch (error) {
                 console.error("Error getting can start: ", error)
@@ -60,7 +64,7 @@ const UserView = () => {
 
         try {
             await axios.post(
-                "http://localhost:5000/api/entries/" + user,
+                API_URL + '/api/entries/' + user,
                 newEntry
             );
         } catch (error) {
