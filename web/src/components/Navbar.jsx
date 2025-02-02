@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { AppBar, Toolbar, Typography, Button, Box, Drawer, List, ListItem, ListItemText, Stack, ListItemIcon } from "@mui/material";
+import { AppBar, Typography, Box, Drawer, List, ListItem, ListItemText, Stack, ListItemIcon } from "@mui/material";
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
-import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import DatasetIcon from '@mui/icons-material/Dataset';
 import { Link } from "react-router-dom";

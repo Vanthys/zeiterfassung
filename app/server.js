@@ -1,21 +1,26 @@
+require("dotenv").config();
+const path = require("path");
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(bodyParser.json());
+
 
 
 const db = new sqlite3.Database('./time_tracking.db', (err) => {
   if (err) {
     console.error(err.message);
   }
-  console.log('Connected to the time tracking database.');
+  console.log('[INFO]: Connected to the time tracking database.');
 });
+
+
 
 
 db.serialize(() => {
@@ -214,7 +219,9 @@ app.get('/api/online', (req, res) => {
 )
 
 
-
+app.get("/api/alive", (req, res) => {
+  res.json({ message: "Am alive" });
+});
 
 //this is probably nuot needed
 app.delete('/api/entries/:id', (req, res) => {
@@ -228,6 +235,13 @@ app.delete('/api/entries/:id', (req, res) => {
 });
 
 
+app.use(express.static(path.join(__dirname, "../web/dist")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../web/dist/index.html"));
+});
+
+
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`[INFO]: Server running on port ${port}`);
 });

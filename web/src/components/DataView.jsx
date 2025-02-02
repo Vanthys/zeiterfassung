@@ -4,14 +4,11 @@ import {
     AccordionSummary,
     AccordionDetails,
     Typography,
-    Button,
     Stack,
     FormControl,
     InputLabel,
     Select,
     MenuItem,
-    Paper,
-    Grid2,
     Container,
     TableContainer,
     Table,
@@ -21,13 +18,15 @@ import {
     TableRow,
     Alert
 } from "@mui/material";
+
 import axios from "axios";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { subYears, format, parseISO, isValid } from "date-fns";
-import { amber } from "@mui/material/colors";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const DataView = () => {
     const [user, setUser] = useState("");
@@ -40,7 +39,7 @@ const DataView = () => {
         const loadUsers = async () => {
             try {
                 const response = await axios.get(
-                    "http://localhost:5000/api/users"
+                    API_URL + "/api/users"
                 );
                 setUsers([...response.data]);
             } catch (error) {
@@ -55,16 +54,18 @@ const DataView = () => {
         const loadSessions = async () => {
             try {
                 const response = await axios.get(
-                    "http://localhost:5000/api/sessions/"  + user
+                    API_URL + "/api/sessions/"  + user
                 );
+                
                 setSessions([...response.data]);
+                
             } catch (error) {
                 console.error("Error getting session: ", error);
             }
         };
 
         loadSessions();
-    }, [users]);
+    }, [user]);
 
     useEffect(() => {
         const groupByYearAndMonth = (sessions) => {
@@ -110,13 +111,13 @@ const DataView = () => {
 
             if (!isValid(startDate) || !isValid(stopDate)) {
                 console.error("Invalid date(s) in entry:", entry);
-                return; // Skip invalid entries
+                return;
             }
 
-            totalDuration += stopDate - startDate; // duration in milliseconds
+            totalDuration += stopDate - startDate;
         });
 
-        return totalDuration / 1000 / 60 / 60; // return in hours
+        return totalDuration / 1000 / 60 / 60; 
     };
 
     return (

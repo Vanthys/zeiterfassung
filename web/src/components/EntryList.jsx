@@ -3,9 +3,10 @@ import { List, ListItem, ListItemText, Paper, Alert } from '@mui/material';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
+const API_URL = import.meta.env.VITE_API_URL;
 
 import axios from 'axios';
-import { format, formatDuration, intervalToDuration } from 'date-fns';
+import { format } from 'date-fns';
 import { de } from 'date-fns/locale'
 
 const EntryList = ({user_id, users, refresh}) => {
@@ -13,8 +14,8 @@ const EntryList = ({user_id, users, refresh}) => {
 
   const fetchEntries = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/entries/' + user_id);
-      //split into year, month
+      const response = await axios.get(
+        API_URL + '/api/entries/' + user_id);
       setEntries(response.data);
     } catch (error) {
       console.error('Error fetching entries:', error);

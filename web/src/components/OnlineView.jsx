@@ -1,9 +1,12 @@
-import { Card, CardContent, CardHeader, Paper, Stack, Typography } from "@mui/material";
+import { Paper, Stack, Typography } from "@mui/material";
 import axios from "axios";
 import { useState, useEffect } from "react";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { format } from "date-fns";
+
+const API_URL = import.meta.env.VITE_API_URL;
+
 const OnlineView = () => {
 
     const [users, setUsers] = useState([{id: 0, username: "loading..."}])
@@ -11,7 +14,7 @@ const OnlineView = () => {
     useEffect(() => {
         const loadUsers = async () => {
             try {
-                const response = await axios.get("http://localhost:5000/api/online");
+                const response = await axios.get(API_URL + '/api/online');
                 setUsers([...response.data]);
             } catch (error) {
                 console.error("Error getting users: ", error)
