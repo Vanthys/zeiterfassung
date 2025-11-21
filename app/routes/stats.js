@@ -40,7 +40,7 @@ router.get('/weekly', authenticateToken, async (req, res) => {
                 };
             }
 
-            weeklyData[weekKey].hours += session.duration;
+            weeklyData[weekKey].hours += session.netDuration || 0;
             weeklyData[weekKey].sessions += 1;
         });
 
@@ -99,7 +99,7 @@ router.get('/weekly/:userId', authenticateToken, requireOwnerOrAdmin('userId'), 
                 };
             }
 
-            weeklyData[weekKey].hours += session.duration;
+            weeklyData[weekKey].hours += session.netDuration || 0;
             weeklyData[weekKey].sessions += 1;
         });
 
@@ -139,7 +139,7 @@ router.get('/monthly', authenticateToken, async (req, res) => {
             },
         });
 
-        const totalHours = workSessions.reduce((sum, session) => sum + session.duration, 0);
+        const totalHours = workSessions.reduce((sum, session) => sum + (session.netDuration || 0), 0);
         const totalSessions = workSessions.length;
         const avgSessionDuration = totalSessions > 0 ? totalHours / totalSessions : 0;
 

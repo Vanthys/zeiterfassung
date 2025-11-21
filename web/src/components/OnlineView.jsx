@@ -1,4 +1,4 @@
-import { Paper, Stack, Typography } from "@mui/material";
+import { Paper, Stack, Typography, Box, Chip } from "@mui/material";
 import axios from "axios";
 import { useState, useEffect } from "react";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -8,8 +8,8 @@ import { format } from "date-fns";
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const OnlineView = () => {
-
-    const [users, setUsers] = useState([{ id: 0, username: "loading..." }])
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadUsers = async () => {
@@ -18,48 +18,98 @@ const OnlineView = () => {
                     `${API_URL}/api/users/online`,
                     { withCredentials: true }
                 );
-                setUsers([...response.data]);
+                setUsers(response.data);
             } catch (error) {
-                console.error("Error getting users: ", error)
+                console.error("Error getting users: ", error);
+            } finally {
+                setLoading(false);
             }
         };
 
         loadUsers();
+
+        // Refresh every 30 seconds
+        const interval = setInterval(loadUsers, 30000);
+        return () => clearInterval(interval);
     }, []);
 
+    const formatDuration = (startTime) => {
+        const now = new Date();
+        const start = new Date(startTime);
+        const diff = now - start;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        }
+        return `${minutes}m`;
+    };
+
+    if (loading) {
+        return <Typography>Loading...</Typography>;
+    }
+
     return (
-        <Stack>
-            {
-                users.map((user) => {
-                    const displayName = user.firstName || user.username;
+        <Box>
+            <Typography variant="h4" gutterBottom>
+                Online Status
+            </Typography>
+
+            <Stack spacing={2}>
+                {users.map((user) => {
+                    const displayName = user.firstName || user.email?.split('@')[0] || 'User';
+                    const isOnline = user.online;
+
                     return (
-                        <Paper key={user.id} elevation={2} style={{ padding: '1em', marginTop: '1em' }}>
-                            <Stack>
-                                <Stack direction="row" sx={{ justifyContent: "space-between" }}>
-                                    <Typography>{displayName}</Typography>
-                                    {user.online ?
-                                        <CheckCircleIcon color="success" />
-                                        :
-                                        <CancelIcon color="error" />
-                                    }
-                                </Stack>
-
-                                {user.online ?
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>jetzt online seit {format(new Date(user.time), 'HH:mm')}</Typography>
-                                    :
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>zuletzt online: {user.time == undefined ? "nie" : format(new Date(user.time), 'HH:mm')}</Typography>
-                                }
+                        <Paper key={user.id} elevation={2} sx={{ p: 2 }}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                <Box>
+                                    <Typography variant="h6">
+                                        {displayName}
+                                        {user.lastName && ` ${user.lastName}`}
+                                    </Typography>
+                                    {isOnline ? (
+                                        <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
+                                            <Chip
+                                                label="Working"
+                                                color="success"
+                                                size="small"
+                                                icon={<CheckCircleIcon />}
+                                            />
+                                            <Typography variant="body2" color="text.secondary">
+                                                seit {format(new Date(user.time), 'HH:mm')} ({formatDuration(user.time)})
+                                            </Typography>
+                                        </Stack>
+                                    ) : (
+                                        <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
+                                            <Chip
+                                                label="Offline"
+                                                color="default"
+                                                size="small"
+                                                icon={<CancelIcon />}
+                                            />
+                                            <Typography variant="body2" color="text.secondary">
+                                                {user.time ? `zuletzt: ${format(new Date(user.time), 'HH:mm')}` : 'nie'}
+                                            </Typography>
+                                        </Stack>
+                                    )}
+                                </Box>
                             </Stack>
-                        </Paper>)
-                })
-            }
+                        </Paper>
+                    );
+                })}
 
+                {users.length === 0 && (
+                    <Paper sx={{ p: 3 }}>
+                        <Typography color="text.secondary" textAlign="center">
+                            Keine Benutzer gefunden
+                        </Typography>
+                    </Paper>
+                )}
+            </Stack>
+        </Box>
+    );
+};
 
-        </Stack>
-
-    )
-
-
-}
-
-export default OnlineView
+export default OnlineView;

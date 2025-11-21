@@ -9,6 +9,7 @@ const { PrismaClient } = require('@prisma/client');
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const sessionRoutes = require('./routes/sessions');
 const timeEntryRoutes = require('./routes/timeEntries');
 const planningRoutes = require('./routes/planning');
 const statsRoutes = require('./routes/stats');
@@ -28,7 +29,8 @@ app.use(cookieParser());
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/entries', timeEntryRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/entries', timeEntryRoutes); // Legacy - will be deprecated
 app.use('/api/planning', planningRoutes);
 app.use('/api/stats', statsRoutes);
 

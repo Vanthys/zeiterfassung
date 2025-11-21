@@ -15,51 +15,98 @@ enum Role {
   USER
 }
 
+enum SessionStatus {
+  ONGOING
+  COMPLETED
+  PAUSED
+}
+
+enum BreakType {
+  PAID
+  UNPAID
+}
+
 model User {
-  id                Int           @id @default(autoincrement())
-  email             String        @unique
-  password          String        // Hashed with bcrypt
+  id                Int                 @id @default(autoincrement())
+  email             String              @unique
+  password          String              // Hashed with bcrypt
   firstName         String?
   lastName          String?
-  role              Role          @default(USER)
-  weeklyHoursTarget Float         @default(40.0) // Expected weekly hours
-  timeEntries       TimeEntry[]
+  role              Role                @default(USER)
+  weeklyHoursTarget Float               @default(40.0) // Expected weekly hours
   workSessions      WorkSession[]
   plannedDays       PlannedDay[]
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  sessionEdits      WorkSessionEdit[]   // Edits made by this user
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
   @@index([email])
   @@index([role])
 }
 
-model TimeEntry {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  time      DateTime
-  type      String   // "START" or "STOP"
-  note      String?  // Optional note for the entry
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([time])
-  @@index([userId, type])
-  @@index([userId, time])
-}
-
 model WorkSession {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  startTime DateTime
-  endTime   DateTime
-  duration  Float    // Duration in hours
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id            Int               @id @default(autoincrement())
+  userId        Int
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  startTime     DateTime
+  endTime       DateTime?         // Null if ongoing
+  status        SessionStatus     @default(ONGOING)
+  
+  // Calculated durations (in hours)
+  totalDuration Float?            // Total time from start to end
+  breakDuration Float             @default(0) // Total break time
+  netDuration   Float?            // totalDuration - breakDuration
+  
+  // Optional fields
+  note          String?
+  project       String?           // Future: link to projects
+  
+  // Relations
+  breaks        Break[]
+  edits         WorkSessionEdit[]
+  
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   @@index([userId])
   @@index([startTime])
   @@index([userId, startTime])
+  @@index([userId, status])
+}
+
+model Break {
+  id            Int          @id @default(autoincrement())
+  workSessionId Int
+  workSession   WorkSession  @relation(fields: [workSessionId], references: [id], onDelete: Cascade)
+  
+  startTime     DateTime
+  endTime       DateTime?    // Null if currently on break
+  duration      Float?       // Hours (calculated when ended)
+  type          BreakType    @default(UNPAID)
+  note          String?      // e.g., "Lunch", "Coffee break"
+  
+  createdAt     DateTime     @default(now())
+  
+  @@index([workSessionId])
+  @@index([startTime])
+}
+
+model WorkSessionEdit {
+  id            Int         @id @default(autoincrement())
+  workSessionId Int
+  workSession   WorkSession @relation(fields: [workSessionId], references: [id], onDelete: Cascade)
+  editedBy      Int
+  editor        User        @relation(fields: [editedBy], references: [id])
+  editedAt      DateTime    @default(now())
+  
+  // What changed (JSON string)
+  changes       String
+  reason        String?
+  
+  @@index([workSessionId])
+  @@index([editedBy])
+  @@index([editedAt])
 }
 
 model PlannedDay {

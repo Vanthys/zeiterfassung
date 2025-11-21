@@ -1,12 +1,12 @@
-import { Container } from '@mui/material';
-import UserView from './components/UserView';
 import OnlineView from './components/OnlineView';
 import DataView from './components/DataView';
+import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Register from './components/Register';
-import Navbar from './components/Navbar';
+import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import AdminRoute from './components/AdminRoute';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
@@ -18,24 +18,25 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected routes */}
-          <Route path="/*" element={
+          {/* Protected routes with layout */}
+          <Route path="/" element={
             <ProtectedRoute>
-              <>
-                <Navbar />
-                <Container maxWidth="md" style={{ marginTop: '40px' }}>
-                  <Routes>
-                    <Route path="/" element={<UserView />} />
-                    <Route path="/online" element={<OnlineView />} />
-                    <Route path="/data" element={<DataView />} />
-                    <Route path="/weekly" element={<div>Weekly Stats - Coming Soon</div>} />
-                    <Route path="/calendar" element={<div>Calendar - Coming Soon</div>} />
-                    <Route path="/admin/users" element={<div>User Management - Coming Soon</div>} />
-                  </Routes>
-                </Container>
-              </>
+              <Layout />
             </ProtectedRoute>
-          } />
+          }>
+            <Route index element={<Dashboard />} />
+            <Route path="online" element={<OnlineView />} />
+            <Route path="data" element={<DataView />} />
+            <Route path="weekly" element={<div>Weekly Stats - Coming Soon</div>} />
+            <Route path="calendar" element={<div>Calendar - Coming Soon</div>} />
+
+            {/* Admin routes */}
+            <Route path="admin/users" element={
+              <AdminRoute>
+                <div>User Management - Coming Soon</div>
+              </AdminRoute>
+            } />
+          </Route>
         </Routes>
       </Router>
     </AuthProvider>

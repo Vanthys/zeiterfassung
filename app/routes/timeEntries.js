@@ -180,4 +180,175 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
 });
 
+/**
+ * PUT /api/entries/:id
+ * Edit a time entry (owner or admin)
+ */
+router.put('/:id', authenticateToken, async (req, res) => {
+    try {
+        const entryId = parseInt(req.params.id);
+        const { time, type, note, reason } = req.body;
+
+        // Get existing entry
+        const entry = await prisma.timeEntry.findUnique({
+            where: { id: entryId },
+        });
+
+        if (!entry) {
+            return res.status(404).json({ error: 'Entry not found' });
+        }
+
+        // Check authorization
+        if (req.user.role !== 'ADMIN' && entry.userId !== req.user.id) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Validate input
+        if (!time || !type) {
+            return res.status(400).json({ error: 'Time and type are required' });
+        }
+
+        if (type !== 'START' && type !== 'STOP') {
+            return res.status(400).json({ error: 'Type must be START or STOP' });
+        }
+
+        const newTime = new Date(time);
+        const now = new Date();
+
+        if (newTime > now) {
+            return res.status(400).json({ error: 'Cannot set time in the future' });
+        }
+
+        // Prevent type changes - type must remain the same
+        if (type !== entry.type) {
+            return res.status(400).json({
+                error: 'Cannot change entry type. If you started work, you must stop it; if you stopped, you must have started.'
+            });
+        }
+
+        // Create edit history record
+        const editRecord = await prisma.timeEntryEdit.create({
+            data: {
+                timeEntryId: entryId,
+                editedBy: req.user.id,
+                previousTime: entry.time,
+                previousType: entry.type,
+                previousNote: entry.note,
+                newTime,
+                newType: type,
+                newNote: note || null,
+                reason: reason || null,
+            },
+        });
+
+        // Update the entry
+        const updatedEntry = await prisma.timeEntry.update({
+            where: { id: entryId },
+            data: {
+                time: newTime,
+                type,
+                note: note || null,
+            },
+        });
+
+        // Handle WorkSession updates
+        if (entry.type === 'STOP' || type === 'STOP') {
+            // Find affected work session(s)
+            const affectedSession = await prisma.workSession.findFirst({
+                where: {
+                    userId: entry.userId,
+                    OR: [
+                        { startTime: entry.time },
+                        { endTime: entry.time },
+                    ],
+                },
+            });
+
+            if (affectedSession) {
+                // Delete the old session
+                await prisma.workSession.delete({
+                    where: { id: affectedSession.id },
+                });
+
+                // Recalculate and create new session if still valid
+                if (type === 'STOP') {
+                    const startEntry = await prisma.timeEntry.findFirst({
+                        where: {
+                            userId: entry.userId,
+                            type: 'START',
+                            time: { lt: newTime },
+                        },
+                        orderBy: { time: 'desc' },
+                    });
+
+                    if (startEntry) {
+                        const duration = (newTime - new Date(startEntry.time)) / (1000 * 60 * 60);
+                        await prisma.workSession.create({
+                            data: {
+                                userId: entry.userId,
+                                startTime: new Date(startEntry.time),
+                                endTime: newTime,
+                                duration,
+                            },
+                        });
+                    }
+                }
+            }
+        }
+
+        res.json({
+            entry: updatedEntry,
+            edit: editRecord
+        });
+    } catch (error) {
+        console.error('Error editing entry:', error);
+        res.status(500).json({ error: 'Failed to edit entry' });
+    }
+});
+
+/**
+ * GET /api/entries/:id/history
+ * Get edit history for a time entry
+ */
+router.get('/:id/history', authenticateToken, async (req, res) => {
+    try {
+        const entryId = parseInt(req.params.id);
+
+        // Get entry to check authorization
+        const entry = await prisma.timeEntry.findUnique({
+            where: { id: entryId },
+        });
+
+        if (!entry) {
+            return res.status(404).json({ error: 'Entry not found' });
+        }
+
+        // Check authorization
+        if (req.user.role !== 'ADMIN' && entry.userId !== req.user.id) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Get edit history
+        const history = await prisma.timeEntryEdit.findMany({
+            where: { timeEntryId: entryId },
+            include: {
+                editor: {
+                    select: {
+                        id: true,
+                        email: true,
+                        firstName: true,
+                        lastName: true,
+                    },
+                },
+            },
+            orderBy: { editedAt: 'desc' },
+        });
+
+        res.json(history);
+    } catch (error) {
+        console.error('Error fetching edit history:', error);
+        res.status(500).json({ error: 'Failed to fetch edit history' });
+    }
+});
+
 module.exports = router;

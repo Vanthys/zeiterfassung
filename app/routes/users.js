@@ -47,18 +47,42 @@ router.get('/online', authenticateToken, async (req, res) => {
             },
         });
 
-        // Get last entry for each user
+        // Get current or last session for each user
         const usersWithStatus = await Promise.all(
             users.map(async (user) => {
-                const lastEntry = await prisma.timeEntry.findFirst({
-                    where: { userId: user.id },
-                    orderBy: { time: 'desc' },
+                // First check for ongoing/paused session
+                const currentSession = await prisma.workSession.findFirst({
+                    where: {
+                        userId: user.id,
+                        status: { in: ['ONGOING', 'PAUSED'] }
+                    },
+                    orderBy: { startTime: 'desc' },
                 });
+
+                let time = null;
+                let online = false;
+
+                if (currentSession) {
+                    online = true;
+                    time = currentSession.startTime;
+                } else {
+                    // If no current session, get the last completed session
+                    const lastSession = await prisma.workSession.findFirst({
+                        where: {
+                            userId: user.id,
+                            status: 'COMPLETED'
+                        },
+                        orderBy: { endTime: 'desc' },
+                    });
+                    if (lastSession) {
+                        time = lastSession.endTime;
+                    }
+                }
 
                 return {
                     ...user,
-                    online: lastEntry ? lastEntry.type === 'START' : false,
-                    time: lastEntry?.time || null,
+                    online,
+                    time,
                 };
             })
         );

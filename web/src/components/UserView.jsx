@@ -1,99 +1,132 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from 'react';
 import {
-    Button,
-    Stack,
-    Typography,
     Paper,
+    Button,
+    Typography,
+    Stack,
+    Alert,
     Box,
-} from "@mui/material";
-import axios from "axios";
-import EntryList from "./EntryList";
-import { useAuth } from "../contexts/AuthContext";
+    Card,
+    CardContent,
+} from '@mui/material';
+import {
+    PlayArrow as StartIcon,
+    Stop as StopIcon,
+} from '@mui/icons-material';
+import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
+import EntryList from './EntryList';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const UserView = () => {
     const { user } = useAuth();
-    const [isStart, setIsStart] = useState(true);
+    const [canStart, setCanStart] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [refresh, setRefresh] = useState(0);
 
     useEffect(() => {
-        const canStart = async () => {
-            try {
-                const response = await axios.get(
-                    `${API_URL}/api/entries/canstart`,
-                    { withCredentials: true }
-                );
-                setIsStart(response.data.canStart);
-            } catch (error) {
-                console.error("Error getting can start: ", error);
-            }
-        };
-        canStart();
-    }, []);
+        checkCanStart();
+    }, [refresh]);
 
-    const handleClick = async (e) => {
-        e.preventDefault();
+    const checkCanStart = async () => {
+        try {
+            const response = await axios.get(
+                `${API_URL}/api/entries/canstart`,
+                { withCredentials: true }
+            );
+            setCanStart(response.data.canStart);
+        } catch (error) {
+            console.error('Error checking status:', error);
+        }
+    };
+
+    const handleAction = async () => {
         setLoading(true);
-
-        const newEntry = {
-            time: (new Date()).toISOString(),
-            type: isStart ? "START" : "STOP"
-        };
-
+        setError('');
         try {
             await axios.post(
                 `${API_URL}/api/entries`,
-                newEntry,
+                {
+                    type: canStart ? 'START' : 'STOP',
+                    time: new Date().toISOString()
+                },
                 { withCredentials: true }
             );
-            setIsStart(!isStart);
+            setRefresh(prev => prev + 1);
         } catch (error) {
-            console.error("Error creating entry:", error);
-            alert(error.response?.data?.error || "Failed to create entry");
+            console.error('Error:', error);
+            setError(error.response?.data?.error || 'An error occurred');
         } finally {
             setLoading(false);
         }
     };
 
+    const getDisplayName = () => {
+        if (user?.firstName && user?.lastName) {
+            return `${user.firstName} ${user.lastName}`;
+        }
+        if (user?.firstName) return user.firstName;
+        if (user?.email) return user.email.split('@')[0];
+        return 'User';
+    };
+
     return (
-        <Stack spacing={3}>
-            <Paper elevation={2} sx={{ p: 3 }}>
-                <Typography variant="h5" gutterBottom>
-                    Welcome, {user?.firstName || user?.username}!
-                </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Track your work hours by clicking Start when you begin and Stop when you finish.
-                </Typography>
+        <Box>
+            <Typography variant="h4" gutterBottom>
+                Time Tracking
+            </Typography>
 
-                <Box mt={3}>
-                    <Stack direction="row" spacing={2} sx={{ justifyContent: "center", alignItems: "center" }}>
-                        <Button
-                            size="large"
-                            variant="contained"
-                            color="success"
-                            disabled={!isStart || loading}
-                            onClick={handleClick}
-                        >
-                            {loading && !isStart ? 'Starting...' : 'Start'}
-                        </Button>
-                        <Button
-                            size="large"
-                            variant="contained"
-                            color="error"
-                            disabled={isStart || loading}
-                            onClick={handleClick}
-                        >
-                            {loading && isStart ? 'Stopping...' : 'Stop'}
-                        </Button>
-                    </Stack>
-                </Box>
-            </Paper>
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+                    {error}
+                </Alert>
+            )}
 
-            <EntryList refresh={!isStart} />
-        </Stack>
+            <Stack spacing={3}>
+                <Card>
+                    <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                            Current Status
+                        </Typography>
+                        <Stack spacing={2}>
+                            <Box
+                                sx={{
+                                    p: 3,
+                                    borderRadius: 2,
+                                    bgcolor: canStart ? 'error.light' : 'success.light',
+                                    color: canStart ? 'error.contrastText' : 'success.contrastText',
+                                    textAlign: 'center',
+                                }}
+                            >
+                                <Typography variant="h5">
+                                    {canStart ? 'Currently Offline' : 'Currently Working'}
+                                </Typography>
+                            </Box>
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                size="large"
+                                color={canStart ? "success" : "error"}
+                                startIcon={canStart ? <StartIcon /> : <StopIcon />}
+                                onClick={handleAction}
+                                disabled={loading}
+                                sx={{
+                                    py: 2,
+                                    fontSize: '1.2rem',
+                                }}
+                            >
+                                {loading ? 'Processing...' : (canStart ? 'Start Working' : 'Stop Working')}
+                            </Button>
+                        </Stack>
+                    </CardContent>
+                </Card>
+
+                <EntryList refresh={refresh} />
+            </Stack>
+        </Box>
     );
 };
 
 export default UserView;
-
