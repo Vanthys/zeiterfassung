@@ -1,0 +1,32 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./time_tracking.db"
+}
+
+model User {
+  id          Int         @id @default(autoincrement())
+  username    String      @unique
+  timeEntries TimeEntry[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model TimeEntry {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  time      DateTime
+  type      String   // "START" or "STOP"
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([time])
+  @@index([userId, type])
+}
