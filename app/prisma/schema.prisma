@@ -10,12 +10,27 @@ datasource db {
   url      = "file:./time_tracking.db"
 }
 
+enum Role {
+  ADMIN
+  USER
+}
+
 model User {
-  id          Int         @id @default(autoincrement())
-  username    String      @unique
-  timeEntries TimeEntry[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                Int           @id @default(autoincrement())
+  email             String        @unique
+  password          String        // Hashed with bcrypt
+  firstName         String?
+  lastName          String?
+  role              Role          @default(USER)
+  weeklyHoursTarget Float         @default(40.0) // Expected weekly hours
+  timeEntries       TimeEntry[]
+  workSessions      WorkSession[]
+  plannedDays       PlannedDay[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([email])
+  @@index([role])
 }
 
 model TimeEntry {
@@ -23,10 +38,41 @@ model TimeEntry {
   userId    Int
   time      DateTime
   type      String   // "START" or "STOP"
+  note      String?  // Optional note for the entry
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([time])
   @@index([userId, type])
+  @@index([userId, time])
+}
+
+model WorkSession {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  startTime DateTime
+  endTime   DateTime
+  duration  Float    // Duration in hours
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([startTime])
+  @@index([userId, startTime])
+}
+
+model PlannedDay {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  date         DateTime // The planned work date
+  plannedHours Float    // Expected hours for this day
+  notes        String?  // Optional notes
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
 }
