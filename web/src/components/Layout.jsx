@@ -74,8 +74,8 @@ const Layout = () => {
         { text: 'Dashboard', icon: <HomeIcon />, path: '/', show: true },
         { text: 'Online Status', icon: <PeopleIcon />, path: '/online', show: true },
         { text: 'Work History', icon: <BarChartIcon />, path: '/data', show: true },
-        { text: 'Weekly Stats', icon: <CalendarIcon />, path: '/weekly', show: true },
         { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar', show: true },
+        { text: 'Weekly Stats', icon: <CalendarIcon />, path: '/weekly', show: true },
     ];
 
     const adminMenuItems = [

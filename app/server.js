@@ -12,6 +12,7 @@ const userRoutes = require('./routes/users');
 const sessionRoutes = require('./routes/sessions');
 const timeEntryRoutes = require('./routes/timeEntries');
 const planningRoutes = require('./routes/planning');
+const calendarRoutes = require('./routes/calendar');
 const statsRoutes = require('./routes/stats');
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/entries', timeEntryRoutes); // Legacy - will be deprecated
 app.use('/api/planning', planningRoutes);
+app.use('/api/calendar', calendarRoutes);
 app.use('/api/stats', statsRoutes);
 
 // Health check endpoint

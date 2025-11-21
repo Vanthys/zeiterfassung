@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Register from './components/Register';
 import Settings from './components/Settings';
+import Calendar from './components/Calendar';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
@@ -29,8 +30,8 @@ function App() {
             <Route path="online" element={<OnlineView />} />
             <Route path="data" element={<DataView />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="calendar" element={<Calendar />} />
             <Route path="weekly" element={<div>Weekly Stats - Coming Soon</div>} />
-            <Route path="calendar" element={<div>Calendar - Coming Soon</div>} />
 
             {/* Admin routes */}
             <Route path="admin/users" element={
