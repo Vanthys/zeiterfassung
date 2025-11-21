@@ -96,11 +96,10 @@ router.get('/online', authenticateToken, async (req, res) => {
 
 /**
  * PUT /api/users/:id
- * Update user (admin only)
+ * Update user (admin or self)
  */
 router.put('/:id',
     authenticateToken,
-    requireAdmin,
     [
         body('role').optional().isIn(['ADMIN', 'USER']),
         body('weeklyHoursTarget').optional().isFloat({ min: 0 }),
@@ -116,6 +115,16 @@ router.put('/:id',
 
             const userId = parseInt(req.params.id);
             const { role, weeklyHoursTarget, firstName, lastName } = req.body;
+
+            // Check permissions: Admin can update anyone, User can only update self
+            if (req.user.role !== 'ADMIN' && req.user.id !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+
+            // Only admin can update role
+            if (role && req.user.role !== 'ADMIN') {
+                return res.status(403).json({ error: 'Only admins can update roles' });
+            }
 
             const updateData = {};
             if (role !== undefined) updateData.role = role;

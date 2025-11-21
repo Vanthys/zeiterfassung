@@ -29,6 +29,7 @@ import {
     AdminPanelSettings as AdminIcon,
     AccountCircle as AccountCircleIcon,
     Logout as LogoutIcon,
+    Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -195,6 +196,16 @@ const Layout = () => {
                                 {user?.email}
                                 {isAdmin() && <Typography variant="caption" display="block" color="text.secondary">Admin</Typography>}
                             </ListItemText>
+                        </MenuItem>
+                        <Divider />
+                        <MenuItem onClick={() => {
+                            handleProfileMenuClose();
+                            navigate('/settings');
+                        }}>
+                            <ListItemIcon>
+                                <SettingsIcon fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>Settings</ListItemText>
                         </MenuItem>
                         <Divider />
                         <MenuItem onClick={handleLogout}>
