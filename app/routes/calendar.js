@@ -11,13 +11,14 @@ const prisma = new PrismaClient();
 /**
  * GET /api/calendar
  * Get calendar data (planned vs worked) for a date range
- * Query: start (YYYY-MM-DD), end (YYYY-MM-DD)
+ * Query: start (YYYY-MM-DD), end (YYYY-MM-DD), userId (optional, admin only)
  */
 router.get('/',
     authenticateToken,
     [
         query('start').isISO8601(),
         query('end').isISO8601(),
+        query('userId').optional().isString(),
     ],
     async (req, res) => {
         try {
@@ -26,27 +27,64 @@ router.get('/',
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const { start, end } = req.query;
-            const userId = req.user.id;
-
+            const { start, end, userId: requestedUserId } = req.query;
             const startDate = parseISO(start);
             const endDate = parseISO(end);
+
+            let userIds = [req.user.id];
+            let includeUserInfo = false;
+
+            // Admin can request other users' calendars
+            if (requestedUserId && req.user.role === 'ADMIN') {
+                if (requestedUserId === 'all') {
+                    // Get all users in the company
+                    const companyUsers = await prisma.user.findMany({
+                        where: { companyId: req.user.companyId },
+                        select: { id: true }
+                    });
+                    userIds = companyUsers.map(u => u.id);
+                    includeUserInfo = true;
+                } else {
+                    // Specific user - verify they're in the same company
+                    const targetUser = await prisma.user.findUnique({
+                        where: { id: parseInt(requestedUserId) },
+                        select: { id: true, companyId: true }
+                    });
+
+                    if (!targetUser || targetUser.companyId !== req.user.companyId) {
+                        return res.status(403).json({ error: 'Access denied' });
+                    }
+
+                    userIds = [targetUser.id];
+                    includeUserInfo = true;
+                }
+            }
 
             // 1. Get Planned Sessions
             const plannedSessions = await prisma.plannedSession.findMany({
                 where: {
-                    userId,
+                    userId: { in: userIds },
                     startTime: {
                         gte: startDate,
                         lte: endOfDay(endDate),
                     },
                 },
+                include: includeUserInfo ? {
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true
+                        }
+                    }
+                } : undefined
             });
 
             // 2. Get Work Sessions
             const workSessions = await prisma.workSession.findMany({
                 where: {
-                    userId,
+                    userId: { in: userIds },
                     startTime: {
                         gte: startDate,
                         lte: endOfDay(endDate),
@@ -54,6 +92,16 @@ router.get('/',
                 },
                 include: {
                     breaks: true,
+                    ...(includeUserInfo ? {
+                        user: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true,
+                                email: true
+                            }
+                        }
+                    } : {})
                 },
             });
 
@@ -66,6 +114,12 @@ router.get('/',
                     start: s.startTime,
                     end: s.endTime,
                     type: 'planned',
+                    isOnCall: s.isOnCall,
+                    ...(includeUserInfo && s.user ? {
+                        userId: s.user.id,
+                        userName: `${s.user.firstName} ${s.user.lastName}`,
+                        userEmail: s.user.email
+                    } : {})
                 })),
                 ...workSessions.map(s => ({
                     id: `worked-${s.id}`,
@@ -75,6 +129,11 @@ router.get('/',
                     end: s.endTime || new Date(), // If ongoing, use current time
                     type: 'worked',
                     status: s.status,
+                    ...(includeUserInfo && s.user ? {
+                        userId: s.user.id,
+                        userName: `${s.user.firstName} ${s.user.lastName}`,
+                        userEmail: s.user.email
+                    } : {})
                 }))
             ];
 
@@ -90,7 +149,7 @@ router.get('/',
 /**
  * POST /api/calendar/plan
  * Create a planned session
- * Body: start (ISO), end (ISO), note (optional)
+ * Body: start (ISO), end (ISO), note (optional), isOnCall (optional)
  */
 router.post('/plan',
     authenticateToken,
@@ -98,6 +157,7 @@ router.post('/plan',
         body('start').isISO8601(),
         body('end').isISO8601(),
         body('note').optional().isString(),
+        body('isOnCall').optional().isBoolean(),
     ],
     async (req, res) => {
         try {
@@ -106,7 +166,7 @@ router.post('/plan',
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const { start, end, note } = req.body;
+            const { start, end, note, isOnCall } = req.body;
             const userId = req.user.id;
 
             const plannedSession = await prisma.plannedSession.create({
@@ -114,7 +174,8 @@ router.post('/plan',
                     userId,
                     startTime: parseISO(start),
                     endTime: parseISO(end),
-                    note,
+                    note: note || null,
+                    isOnCall: isOnCall || false,
                 },
             });
 
@@ -137,6 +198,7 @@ router.put('/plan/:id',
         body('start').isISO8601(),
         body('end').isISO8601(),
         body('note').optional().isString(),
+        body('isOnCall').optional().isBoolean(),
     ],
     async (req, res) => {
         try {
@@ -145,7 +207,7 @@ router.put('/plan/:id',
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const { start, end, note } = req.body;
+            const { start, end, note, isOnCall } = req.body;
             const id = parseInt(req.params.id);
             const userId = req.user.id;
 
@@ -163,7 +225,8 @@ router.put('/plan/:id',
                 data: {
                     startTime: parseISO(start),
                     endTime: parseISO(end),
-                    note,
+                    note: note || null,
+                    isOnCall: isOnCall !== undefined ? isOnCall : existing.isOnCall,
                 },
             });
 

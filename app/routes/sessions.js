@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
-const { authenticateToken, isAdmin, isOwnerOrAdmin } = require('../middleware/auth');
+const { authenticateToken, checkCompanyAccess } = require('../middleware/auth');
 
 const prisma = new PrismaClient();
 
@@ -81,8 +81,9 @@ router.post('/:id/stop', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        // Authorization check
-        if (session.userId !== req.user.id && req.user.role !== 'ADMIN') {
+        // Authorization check with company scoping
+        const hasAccess = await checkCompanyAccess(session.userId, req.user.id, req.user.companyId);
+        if (!hasAccess) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
@@ -153,7 +154,9 @@ router.post('/:id/break/start', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        if (session.userId !== req.user.id && req.user.role !== 'ADMIN') {
+        // Authorization check with company scoping
+        const hasAccess = await checkCompanyAccess(session.userId, req.user.id, req.user.companyId);
+        if (!hasAccess) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
@@ -203,7 +206,9 @@ router.post('/:id/break/end', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        if (session.userId !== req.user.id && req.user.role !== 'ADMIN') {
+        // Authorization check with company scoping
+        const hasAccess = await checkCompanyAccess(session.userId, req.user.id, req.user.companyId);
+        if (!hasAccess) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
@@ -286,8 +291,9 @@ router.get('/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        // Authorization check
-        if (session.userId !== req.user.id && req.user.role !== 'ADMIN') {
+        // Authorization check with company scoping
+        const hasAccess = await checkCompanyAccess(session.userId, req.user.id, req.user.companyId);
+        if (!hasAccess) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
@@ -312,8 +318,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        // Authorization check
-        if (session.userId !== req.user.id && req.user.role !== 'ADMIN') {
+        // Authorization check with company scoping
+        const hasAccess = await checkCompanyAccess(session.userId, req.user.id, req.user.companyId);
+        if (!hasAccess) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
@@ -379,8 +386,9 @@ router.delete('/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        // Authorization check
-        if (session.userId !== req.user.id && req.user.role !== 'ADMIN') {
+        // Authorization check with company scoping
+        const hasAccess = await checkCompanyAccess(session.userId, req.user.id, req.user.companyId);
+        if (!hasAccess) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
