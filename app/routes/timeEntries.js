@@ -1,6 +1,6 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
-const { authenticateToken, requireAdmin, requireOwnerOrAdmin } = require('../middleware/auth');
+const { authenticateToken, requireAdmin, requireOwnerOrAdmin, checkCompanyAccess } = require('../middleware/auth');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -24,11 +24,22 @@ router.get('/me', authenticateToken, async (req, res) => {
 
 /**
  * GET /api/entries
- * Get all time entries (admin only)
+ * Get all time entries for company (admin only)
  */
 router.get('/', authenticateToken, requireAdmin, async (req, res) => {
     try {
+        // Get all users in the admin's company
+        const companyUsers = await prisma.user.findMany({
+            where: { companyId: req.user.companyId },
+            select: { id: true }
+        });
+
+        const userIds = companyUsers.map(u => u.id);
+
         const entries = await prisma.timeEntry.findMany({
+            where: {
+                userId: { in: userIds }
+            },
             include: {
                 user: {
                     select: {
@@ -164,8 +175,9 @@ router.delete('/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Entry not found' });
         }
 
-        // Check authorization
-        if (req.user.role !== 'ADMIN' && entry.userId !== req.user.id) {
+        // Check authorization with company scoping
+        const hasAccess = await checkCompanyAccess(entry.userId, req.user.id, req.user.companyId);
+        if (!hasAccess) {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -198,8 +210,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Entry not found' });
         }
 
-        // Check authorization
-        if (req.user.role !== 'ADMIN' && entry.userId !== req.user.id) {
+        // Check authorization with company scoping
+        const hasAccess = await checkCompanyAccess(entry.userId, req.user.id, req.user.companyId);
+        if (!hasAccess) {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -323,8 +336,9 @@ router.get('/:id/history', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Entry not found' });
         }
 
-        // Check authorization
-        if (req.user.role !== 'ADMIN' && entry.userId !== req.user.id) {
+        // Check authorization with company scoping
+        const hasAccess = await checkCompanyAccess(entry.userId, req.user.id, req.user.companyId);
+        if (!hasAccess) {
             return res.status(403).json({ error: 'Access denied' });
         }
 

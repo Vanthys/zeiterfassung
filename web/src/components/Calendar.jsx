@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Calendar as BigCalendar, momentLocalizer, Views } from 'react-big-calendar';
-import moment from 'moment';
+import { Calendar as BigCalendar, dateFnsLocalizer, Views } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth, endOfWeek } from 'date-fns';
+import { de, enUS, fr, es, it } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import {
     Box,
@@ -13,17 +14,30 @@ import {
     DialogActions,
     Button,
     TextField,
-    IconButton,
     Stack,
     useTheme,
+    FormControlLabel,
+    Checkbox,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Chip,
 } from '@mui/material';
-import { Delete as DeleteIcon } from '@mui/icons-material';
+import { Delete as DeleteIcon, Phone as PhoneIcon } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
-// Setup the localizer for react-big-calendar
-const localizer = momentLocalizer(moment);
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+// Locale map
+const locales = {
+    de,
+    en: enUS,
+    fr,
+    es,
+    it
+};
 
 const Calendar = () => {
     const { user } = useAuth();
@@ -31,28 +45,32 @@ const Calendar = () => {
     const [events, setEvents] = useState([]);
     const [view, setView] = useState(Views.WEEK);
     const [date, setDate] = useState(new Date());
+    const [openDialog, setOpenDialog] = useState(false);
+    const [selectedSlot, setSelectedSlot] = useState(null);
+    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [note, setNote] = useState('');
+    const [isOnCall, setIsOnCall] = useState(false);
 
-    const locale = user?.company?.country || 'en-US';
+    // Admin multi-user view
+    const [selectedUserId, setSelectedUserId] = useState('me');
+    const [companyUsers, setCompanyUsers] = useState([]);
 
-    // Load moment locale dynamically
-    useEffect(() => {
-        const loadLocale = async () => {
-            const lang = locale.split('-')[0].toLowerCase();
-            if (lang !== 'en') {
-                try {
-                    await import(`moment/locale/${lang}`);
-                    moment.locale(lang);
-                } catch (e) {
-                    console.warn(`Could not load locale ${lang}`, e);
-                }
-            } else {
-                moment.locale('en');
-            }
-        };
-        loadLocale();
-    }, [locale]);
+    const localeString = user?.company?.country || 'en-US';
+    const lang = localeString.split('-')[0].toLowerCase();
+    const locale = locales[lang] || locales.en;
+    const isAdmin = user?.role === 'ADMIN';
 
-    // Configure start time (8:00 AM)
+    // Create localizer with date-fns
+    const localizer = useMemo(() => {
+        return dateFnsLocalizer({
+            format: (date, formatStr, options) => format(date, formatStr, { ...options, locale }),
+            parse,
+            startOfWeek: (date) => startOfWeek(date, { locale, weekStartsOn: 1 }), // Monday
+            getDay,
+            locales: { [lang]: locale }
+        });
+    }, [lang, locale]);
+
     const { minTime, maxTime } = useMemo(() => {
         const min = new Date();
         min.setHours(8, 0, 0, 0);
@@ -61,30 +79,48 @@ const Calendar = () => {
         return { minTime: min, maxTime: max };
     }, []);
 
-    // Dialog state
-    const [openDialog, setOpenDialog] = useState(false);
-    const [selectedSlot, setSelectedSlot] = useState(null);
-    const [selectedEvent, setSelectedEvent] = useState(null);
-    const [note, setNote] = useState('');
+    // Fetch company users for admin
+    useEffect(() => {
+        if (isAdmin) {
+            const fetchCompanyUsers = async () => {
+                try {
+                    const response = await axios.get(`${API_URL}/api/users`, {
+                        withCredentials: true,
+                    });
+                    setCompanyUsers(response.data);
+                } catch (error) {
+                    console.error('Error fetching company users:', error);
+                }
+            };
+            fetchCompanyUsers();
+        }
+    }, [isAdmin]);
 
     const fetchEvents = useCallback(async () => {
         try {
-            // Calculate start/end of current view
             let start, end;
             if (view === Views.WEEK) {
-                start = moment(date).startOf('week').format('YYYY-MM-DD');
-                end = moment(date).endOf('week').format('YYYY-MM-DD');
+                const weekStart = startOfWeek(date, { locale, weekStartsOn: 1 });
+                const weekEnd = endOfWeek(date, { locale, weekStartsOn: 1 });
+                start = format(weekStart, 'yyyy-MM-dd');
+                end = format(weekEnd, 'yyyy-MM-dd');
             } else {
-                start = moment(date).startOf('month').format('YYYY-MM-DD');
-                end = moment(date).endOf('month').format('YYYY-MM-DD');
+                const monthStart = startOfMonth(date);
+                const monthEnd = endOfMonth(date);
+                start = format(monthStart, 'yyyy-MM-dd');
+                end = format(monthEnd, 'yyyy-MM-dd');
+            }
+
+            const params = { start, end };
+            if (isAdmin && selectedUserId !== 'me') {
+                params.userId = selectedUserId;
             }
 
             const response = await axios.get(`${API_URL}/api/calendar`, {
-                params: { start, end },
+                params,
                 withCredentials: true,
             });
 
-            // Convert strings to Date objects
             const parsedEvents = response.data.map(evt => ({
                 ...evt,
                 start: new Date(evt.start),
@@ -95,7 +131,7 @@ const Calendar = () => {
         } catch (error) {
             console.error('Error fetching calendar events:', error);
         }
-    }, [date, view]);
+    }, [date, view, locale, isAdmin, selectedUserId]);
 
     useEffect(() => {
         fetchEvents();
@@ -105,6 +141,7 @@ const Calendar = () => {
         setSelectedSlot(slotInfo);
         setSelectedEvent(null);
         setNote('');
+        setIsOnCall(false);
         setOpenDialog(true);
     };
 
@@ -113,6 +150,7 @@ const Calendar = () => {
             setSelectedEvent(event);
             setSelectedSlot(null);
             setNote(event.title === 'Planned Work' ? '' : event.title);
+            setIsOnCall(event.isOnCall || false);
             setOpenDialog(true);
         }
     };
@@ -120,18 +158,18 @@ const Calendar = () => {
     const handleSave = async () => {
         try {
             if (selectedEvent) {
-                // Update existing
                 await axios.put(`${API_URL}/api/calendar/plan/${selectedEvent.dbId}`, {
                     start: selectedEvent.start,
                     end: selectedEvent.end,
                     note: note || 'Planned Work',
+                    isOnCall,
                 }, { withCredentials: true });
             } else if (selectedSlot) {
-                // Create new
                 await axios.post(`${API_URL}/api/calendar/plan`, {
                     start: selectedSlot.start,
                     end: selectedSlot.end,
                     note: note || 'Planned Work',
+                    isOnCall,
                 }, { withCredentials: true });
             }
             setOpenDialog(false);
@@ -156,13 +194,19 @@ const Calendar = () => {
 
     const eventStyleGetter = (event) => {
         let backgroundColor = theme.palette.primary.main;
+        let borderLeft = '0px';
+
         if (event.type === 'worked') {
             backgroundColor = theme.palette.success.main;
             if (event.status === 'ONGOING') backgroundColor = theme.palette.success.light;
             if (event.status === 'PAUSED') backgroundColor = theme.palette.warning.main;
-        } else {
-            // Planned
-            backgroundColor = theme.palette.info.main;
+        } else if (event.type === 'planned') {
+            if (event.isOnCall) {
+                backgroundColor = theme.palette.warning.main; // Orange for on-call
+                borderLeft = `4px solid ${theme.palette.warning.dark}`;
+            } else {
+                backgroundColor = theme.palette.info.main;
+            }
         }
 
         return {
@@ -172,17 +216,81 @@ const Calendar = () => {
                 opacity: 0.8,
                 color: 'white',
                 border: '0px',
+                borderLeft,
                 display: 'block'
             }
         };
     };
 
+    const EventComponent = ({ event }) => {
+        return (
+            <Box>
+                <Typography variant="caption" component="div" sx={{ fontWeight: 'bold' }}>
+                    {event.isOnCall && <PhoneIcon sx={{ fontSize: 12, mr: 0.5, verticalAlign: 'middle' }} />}
+                    {event.title}
+                </Typography>
+                {event.userName && (
+                    <Typography variant="caption" component="div" sx={{ fontSize: '0.7rem', opacity: 0.9 }}>
+                        {event.userName}
+                    </Typography>
+                )}
+            </Box>
+        );
+    };
+
+    const messages = useMemo(() => {
+        if (lang === 'de') {
+            return {
+                date: 'Datum',
+                time: 'Zeit',
+                event: 'Ereignis',
+                allDay: 'Ganztägig',
+                week: 'Woche',
+                work_week: 'Arbeitswoche',
+                day: 'Tag',
+                month: 'Monat',
+                previous: 'Zurück',
+                next: 'Weiter',
+                yesterday: 'Gestern',
+                tomorrow: 'Morgen',
+                today: 'Heute',
+                agenda: 'Agenda',
+                noEventsInRange: 'Keine Ereignisse in diesem Zeitraum.',
+                showMore: total => `+ ${total} mehr`
+            };
+        }
+        return undefined;
+    }, [lang]);
+
     return (
         <Box sx={{ height: 'calc(100vh - 100px)', p: 2 }}>
             <Card sx={{ height: '100%' }}>
                 <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    {/* Admin User Filter */}
+                    {isAdmin && (
+                        <Box sx={{ mb: 2 }}>
+                            <FormControl size="small" sx={{ minWidth: 250 }}>
+                                <InputLabel>View Calendar</InputLabel>
+                                <Select
+                                    value={selectedUserId}
+                                    label="View Calendar"
+                                    onChange={(e) => setSelectedUserId(e.target.value)}
+                                >
+                                    <MenuItem value="me">My Calendar</MenuItem>
+                                    <MenuItem value="all">All Team Members</MenuItem>
+                                    {companyUsers.map(u => (
+                                        <MenuItem key={u.id} value={u.id.toString()}>
+                                            {u.firstName} {u.lastName}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Box>
+                    )}
+
                     <Box sx={{ flexGrow: 1 }}>
                         <BigCalendar
+                            key={`${lang}-${selectedUserId}`}
                             localizer={localizer}
                             events={events}
                             startAccessor="start"
@@ -198,17 +306,20 @@ const Calendar = () => {
                             onSelectSlot={handleSelectSlot}
                             onSelectEvent={handleSelectEvent}
                             eventPropGetter={eventStyleGetter}
+                            components={{
+                                event: EventComponent
+                            }}
                             step={30}
                             timeslots={2}
                             min={minTime}
                             max={maxTime}
-                            culture={locale.split('-')[0].toLowerCase()}
+                            culture={lang}
+                            messages={messages}
                         />
                     </Box>
                 </CardContent>
             </Card>
 
-            {/* Add/Edit Dialog */}
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
                 <DialogTitle>
                     {selectedEvent ? 'Edit Planned Session' : 'Plan Work Session'}
@@ -225,9 +336,27 @@ const Calendar = () => {
                             onChange={(e) => setNote(e.target.value)}
                             placeholder="e.g., Deep Work, Meetings"
                         />
+
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={isOnCall}
+                                    onChange={(e) => setIsOnCall(e.target.checked)}
+                                    color="warning"
+                                />
+                            }
+                            label={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <PhoneIcon fontSize="small" />
+                                    <span>On-Call</span>
+                                </Box>
+                            }
+                            sx={{ mt: 2 }}
+                        />
+
                         {selectedSlot && (
                             <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 2 }}>
-                                {moment(selectedSlot.start).format('LT')} - {moment(selectedSlot.end).format('LT')}
+                                {format(selectedSlot.start, 'p', { locale })} - {format(selectedSlot.end, 'p', { locale })}
                             </Typography>
                         )}
                     </Box>
@@ -247,3 +376,4 @@ const Calendar = () => {
 };
 
 export default Calendar;
+
