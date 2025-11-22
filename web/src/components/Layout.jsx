@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
 import {
     Box,
     Drawer,
@@ -30,12 +30,13 @@ import {
     AccountCircle as AccountCircleIcon,
     Logout as LogoutIcon,
     Settings as SettingsIcon,
+    Mail as MailIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
 const drawerWidth = 240;
 
-const Layout = () => {
+const Layout = ({ children }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const theme = useTheme();
@@ -73,13 +74,14 @@ const Layout = () => {
     const menuItems = [
         { text: 'Dashboard', icon: <HomeIcon />, path: '/', show: true },
         { text: 'Online Status', icon: <PeopleIcon />, path: '/online', show: true },
-        { text: 'Work History', icon: <BarChartIcon />, path: '/data', show: true },
+        { text: 'Work History', icon: <BarChartIcon />, path: '/history', show: true },
         { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar', show: true },
-        { text: 'Weekly Stats', icon: <CalendarIcon />, path: '/weekly', show: true },
     ];
 
     const adminMenuItems = [
-        { text: 'User Management', icon: <AdminIcon />, path: '/admin/users', show: isAdmin() },
+        { text: 'Invites', icon: <MailIcon />, path: '/invites', show: isAdmin() },
+        { text: 'Company', icon: <AdminIcon />, path: '/company', show: isAdmin() },
+        // { text: 'User Management', icon: <AdminIcon />, path: '/admin/users', show: isAdmin() },
     ];
 
     const getDisplayName = () => {
@@ -131,6 +133,20 @@ const Layout = () => {
                     </List>
                 </>
             )}
+            <Divider />
+            <List>
+                <ListItem disablePadding>
+                    <ListItemButton
+                        selected={location.pathname === '/settings'}
+                        onClick={() => handleNavigation('/settings')}
+                    >
+                        <ListItemIcon>
+                            <SettingsIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Settings" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
         </div>
     );
 
@@ -154,7 +170,9 @@ const Layout = () => {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-                        {menuItems.find(item => item.path === location.pathname)?.text || 'Zeiterfassung'}
+                        {menuItems.find(item => item.path === location.pathname)?.text ||
+                            adminMenuItems.find(item => item.path === location.pathname)?.text ||
+                            (location.pathname === '/settings' ? 'Settings' : 'Zeiterfassung')}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Typography variant="body2">
@@ -257,7 +275,7 @@ const Layout = () => {
                     mt: 8,
                 }}
             >
-                <Outlet />
+                {children || <Outlet />}
             </Box>
         </Box>
     );

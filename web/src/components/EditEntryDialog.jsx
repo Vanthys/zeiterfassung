@@ -13,10 +13,13 @@ import {
     Typography,
 } from '@mui/material';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const EditEntryDialog = ({ open, onClose, entry, onSuccess }) => {
+    const { user } = useAuth();
+    const locale = user?.company?.country || 'en-US';
     const [time, setTime] = useState('');
     const [note, setNote] = useState('');
     const [reason, setReason] = useState('');
@@ -137,7 +140,7 @@ const EditEntryDialog = ({ open, onClose, entry, onSuccess }) => {
                             <Box component="ul" sx={{ mt: 1, mb: 0 }}>
                                 {time && time !== new Date(entry.time).toISOString().slice(0, 16) && (
                                     <li>
-                                        Time: {new Date(entry.time).toLocaleString()} → {new Date(time).toLocaleString()}
+                                        Time: {new Date(entry.time).toLocaleString(locale)} → {new Date(time).toLocaleString(locale)}
                                     </li>
                                 )}
                                 {(note || '') !== (entry.note || '') && (

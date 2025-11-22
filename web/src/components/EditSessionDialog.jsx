@@ -15,10 +15,13 @@ import {
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const EditSessionDialog = ({ open, onClose, session, onSuccess }) => {
+    const { user } = useAuth();
+    const locale = user?.company?.country || 'en-US';
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
     const [note, setNote] = useState('');
@@ -94,7 +97,7 @@ const EditSessionDialog = ({ open, onClose, session, onSuccess }) => {
     };
 
     const formatTime = (date) => {
-        return new Date(date).toLocaleTimeString('en-US', {
+        return new Date(date).toLocaleTimeString(locale, {
             hour: '2-digit',
             minute: '2-digit'
         });
@@ -214,15 +217,15 @@ const EditSessionDialog = ({ open, onClose, session, onSuccess }) => {
                             <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
                                 {startTime !== new Date(session.startTime).toISOString().slice(0, 16) && (
                                     <li>
-                                        Start: {new Date(session.startTime).toLocaleString()} →{' '}
-                                        {new Date(startTime).toLocaleString()}
+                                        Start: {new Date(session.startTime).toLocaleString(locale)} →{' '}
+                                        {new Date(startTime).toLocaleString(locale)}
                                     </li>
                                 )}
                                 {endTime &&
                                     endTime !== new Date(session.endTime).toISOString().slice(0, 16) && (
                                         <li>
-                                            End: {new Date(session.endTime).toLocaleString()} →{' '}
-                                            {new Date(endTime).toLocaleString()}
+                                            End: {new Date(session.endTime).toLocaleString(locale)} →{' '}
+                                            {new Date(endTime).toLocaleString(locale)}
                                         </li>
                                     )}
                                 {(note || '') !== (session.note || '') && (

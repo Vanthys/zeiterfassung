@@ -14,6 +14,8 @@ const timeEntryRoutes = require('./routes/timeEntries');
 const planningRoutes = require('./routes/planning');
 const calendarRoutes = require('./routes/calendar');
 const statsRoutes = require('./routes/stats');
+const inviteRoutes = require('./routes/invites');
+const companyRoutes = require('./routes/company');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -35,6 +37,8 @@ app.use('/api/entries', timeEntryRoutes); // Legacy - will be deprecated
 app.use('/api/planning', planningRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/invites', inviteRoutes);
+app.use('/api/company', companyRoutes);
 
 // Health check endpoint
 app.get("/api/alive", (req, res) => {

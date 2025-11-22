@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Calendar as BigCalendar, momentLocalizer, Views } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -31,6 +31,35 @@ const Calendar = () => {
     const [events, setEvents] = useState([]);
     const [view, setView] = useState(Views.WEEK);
     const [date, setDate] = useState(new Date());
+
+    const locale = user?.company?.country || 'en-US';
+
+    // Load moment locale dynamically
+    useEffect(() => {
+        const loadLocale = async () => {
+            const lang = locale.split('-')[0].toLowerCase();
+            if (lang !== 'en') {
+                try {
+                    await import(`moment/locale/${lang}`);
+                    moment.locale(lang);
+                } catch (e) {
+                    console.warn(`Could not load locale ${lang}`, e);
+                }
+            } else {
+                moment.locale('en');
+            }
+        };
+        loadLocale();
+    }, [locale]);
+
+    // Configure start time (8:00 AM)
+    const { minTime, maxTime } = useMemo(() => {
+        const min = new Date();
+        min.setHours(8, 0, 0, 0);
+        const max = new Date();
+        max.setHours(20, 0, 0, 0);
+        return { minTime: min, maxTime: max };
+    }, []);
 
     // Dialog state
     const [openDialog, setOpenDialog] = useState(false);
@@ -152,10 +181,6 @@ const Calendar = () => {
         <Box sx={{ height: 'calc(100vh - 100px)', p: 2 }}>
             <Card sx={{ height: '100%' }}>
                 <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="h5" gutterBottom>
-                        Calendar
-                    </Typography>
-
                     <Box sx={{ flexGrow: 1 }}>
                         <BigCalendar
                             localizer={localizer}
@@ -175,6 +200,9 @@ const Calendar = () => {
                             eventPropGetter={eventStyleGetter}
                             step={30}
                             timeslots={2}
+                            min={minTime}
+                            max={maxTime}
+                            culture={locale.split('-')[0].toLowerCase()}
                         />
                     </Box>
                 </CardContent>

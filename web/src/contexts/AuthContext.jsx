@@ -52,20 +52,23 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const register = async (userData) => {
+    const register = async (email, password, firstName, lastName, token) => {
         try {
             const response = await axios.post(
                 `${API_URL}/api/auth/register`,
-                userData,
+                {
+                    email,
+                    password,
+                    firstName,
+                    lastName,
+                    token
+                },
                 { withCredentials: true }
             );
             setUser(response.data.user);
             return { success: true };
         } catch (error) {
-            return {
-                success: false,
-                error: error.response?.data?.error || 'Registration failed',
-            };
+            throw error; // Let component handle error
         }
     };
 

@@ -73,9 +73,6 @@ const Settings = () => {
 
     return (
         <Box maxWidth="md" mx="auto">
-            <Typography variant="h4" gutterBottom>
-                Settings
-            </Typography>
 
             <Card>
                 <CardContent>

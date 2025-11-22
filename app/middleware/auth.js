@@ -29,6 +29,12 @@ const authenticateToken = async (req, res, next) => {
         lastName: true,
         role: true,
         weeklyHoursTarget: true,
+        companyId: true,
+        company: {
+          select: {
+            country: true
+          }
+        }
       }
     });
 

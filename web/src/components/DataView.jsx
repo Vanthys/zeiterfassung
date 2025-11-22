@@ -26,16 +26,22 @@ import {
     DialogContentText,
     DialogActions,
     Button,
+    Tooltip,
 } from '@mui/material';
 import {
     ExpandMore as ExpandMoreIcon,
     ExpandLess as ExpandLessIcon,
     Edit as EditIcon,
     Delete as DeleteIcon,
+    PictureAsPdf as PdfIcon,
+    TableView as ExcelIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import EditSessionDialog from './EditSessionDialog';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -82,7 +88,7 @@ const DataView = () => {
                 ? `/api/stats/sessions/${selectedUserId}`
                 : '/api/stats/sessions';
 
-            const response = await axios.get(`${API_URL}${endpoint}?limit=100`, {
+            const response = await axios.get(`${API_URL}${endpoint}?limit=500`, { // Increased limit for reporting
                 withCredentials: true
             });
             setSessions(response.data);
@@ -141,8 +147,11 @@ const DataView = () => {
         }
     };
 
+    // Get locale from user company or default to en-US
+    const locale = user?.company?.country || 'en-US';
+
     const formatTime = (date) => {
-        return new Date(date).toLocaleTimeString('en-US', {
+        return new Date(date).toLocaleTimeString(locale, {
             hour: '2-digit',
             minute: '2-digit'
         });
@@ -155,26 +164,89 @@ const DataView = () => {
         return `${h}h ${m}m`;
     };
 
-    // Group sessions by date
-    const sessionsByDate = sessions.reduce((acc, session) => {
-        const date = new Date(session.startTime).toLocaleDateString('en-US', {
+    // Group sessions by Month
+    const sessionsByMonth = sessions.reduce((acc, session) => {
+        const date = new Date(session.startTime);
+        const monthKey = date.toLocaleDateString(locale, {
             year: 'numeric',
-            month: 'long',
-            day: 'numeric'
+            month: 'long'
         });
-        if (!acc[date]) {
-            acc[date] = [];
+
+        if (!acc[monthKey]) {
+            acc[monthKey] = [];
         }
-        acc[date].push(session);
+        acc[monthKey].push(session);
         return acc;
     }, {});
 
+    const exportPDF = (month, monthSessions) => {
+        const doc = new jsPDF();
+        const selectedUser = users.find(u => u.id === parseInt(selectedUserId)) || user;
+
+        doc.setFontSize(18);
+        doc.text(`Work Report - ${month}`, 14, 22);
+
+        doc.setFontSize(12);
+        doc.text(`Employee: ${selectedUser.firstName || ''} ${selectedUser.lastName || selectedUser.email}`, 14, 32);
+        doc.text(`Generated: ${new Date().toLocaleDateString(locale)}`, 14, 38);
+
+        const tableData = monthSessions.map(s => [
+            new Date(s.startTime).toLocaleDateString(locale),
+            formatTime(s.startTime),
+            s.endTime ? formatTime(s.endTime) : 'Ongoing',
+            formatDuration(s.breakDuration),
+            formatDuration(s.netDuration),
+            s.note || ''
+        ]);
+
+        // Calculate totals
+        const totalNet = monthSessions.reduce((sum, s) => sum + (s.netDuration || 0), 0);
+        const totalBreaks = monthSessions.reduce((sum, s) => sum + (s.breakDuration || 0), 0);
+
+        doc.autoTable({
+            startY: 45,
+            head: [['Date', 'Start', 'End', 'Breaks', 'Net Duration', 'Note']],
+            body: tableData,
+            foot: [['', '', 'Total:', formatDuration(totalBreaks), formatDuration(totalNet), '']],
+        });
+
+        doc.save(`Work_Report_${month.replace(' ', '_')}.pdf`);
+    };
+
+    const exportExcel = (month, monthSessions) => {
+        const selectedUser = users.find(u => u.id === parseInt(selectedUserId)) || user;
+
+        const data = monthSessions.map(s => ({
+            Date: new Date(s.startTime).toLocaleDateString(locale),
+            Start: formatTime(s.startTime),
+            End: s.endTime ? formatTime(s.endTime) : 'Ongoing',
+            'Break Duration': formatDuration(s.breakDuration),
+            'Net Duration': formatDuration(s.netDuration),
+            Note: s.note || ''
+        }));
+
+        // Add totals row
+        const totalNet = monthSessions.reduce((sum, s) => sum + (s.netDuration || 0), 0);
+        const totalBreaks = monthSessions.reduce((sum, s) => sum + (s.breakDuration || 0), 0);
+
+        data.push({
+            Date: 'TOTAL',
+            Start: '',
+            End: '',
+            'Break Duration': formatDuration(totalBreaks),
+            'Net Duration': formatDuration(totalNet),
+            Note: ''
+        });
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Work Report");
+
+        XLSX.writeFile(wb, `Work_Report_${month.replace(' ', '_')}.xlsx`);
+    };
+
     return (
         <Box>
-            <Typography variant="h4" gutterBottom>
-                Work History
-            </Typography>
-
             {isAdmin() && (
                 <Card sx={{ mb: 3 }}>
                     <CardContent>
@@ -217,26 +289,30 @@ const DataView = () => {
                 </Card>
             ) : (
                 <Stack spacing={3}>
-                    {Object.entries(sessionsByDate).map(([date, dateSessions]) => {
-                        const totalNet = dateSessions.reduce((sum, s) => sum + (s.netDuration || 0), 0);
-                        const totalBreaks = dateSessions.reduce((sum, s) => sum + (s.breakDuration || 0), 0);
+                    {Object.entries(sessionsByMonth).map(([month, monthSessions]) => {
+                        const totalNet = monthSessions.reduce((sum, s) => sum + (s.netDuration || 0), 0);
+                        const totalBreaks = monthSessions.reduce((sum, s) => sum + (s.breakDuration || 0), 0);
 
                         return (
-                            <Card key={date}>
+                            <Card key={month}>
                                 <CardContent>
                                     <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                                        <Typography variant="h6">{date}</Typography>
-                                        <Stack direction="row" spacing={2}>
+                                        <Typography variant="h6">{month}</Typography>
+                                        <Stack direction="row" spacing={1}>
                                             <Chip
                                                 label={`Net: ${formatDuration(totalNet)}`}
                                                 color="primary"
                                             />
-                                            {totalBreaks > 0 && (
-                                                <Chip
-                                                    label={`Breaks: ${formatDuration(totalBreaks)}`}
-                                                    variant="outlined"
-                                                />
-                                            )}
+                                            <Tooltip title="Export PDF">
+                                                <IconButton onClick={() => exportPDF(month, monthSessions)} color="error">
+                                                    <PdfIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Export Excel">
+                                                <IconButton onClick={() => exportExcel(month, monthSessions)} color="success">
+                                                    <ExcelIcon />
+                                                </IconButton>
+                                            </Tooltip>
                                         </Stack>
                                     </Stack>
 
@@ -245,6 +321,7 @@ const DataView = () => {
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell width="50px"></TableCell>
+                                                    <TableCell>Date</TableCell>
                                                     <TableCell>Start</TableCell>
                                                     <TableCell>End</TableCell>
                                                     <TableCell>Status</TableCell>
@@ -255,7 +332,7 @@ const DataView = () => {
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
-                                                {dateSessions.map((session) => (
+                                                {monthSessions.map((session) => (
                                                     <React.Fragment key={session.id}>
                                                         <TableRow hover>
                                                             <TableCell>
@@ -272,6 +349,7 @@ const DataView = () => {
                                                                     </IconButton>
                                                                 )}
                                                             </TableCell>
+                                                            <TableCell>{new Date(session.startTime).toLocaleDateString(locale)}</TableCell>
                                                             <TableCell>{formatTime(session.startTime)}</TableCell>
                                                             <TableCell>
                                                                 {session.endTime ? formatTime(session.endTime) : '-'}
@@ -322,7 +400,7 @@ const DataView = () => {
                                                         </TableRow>
                                                         {session.breaks && session.breaks.length > 0 && (
                                                             <TableRow>
-                                                                <TableCell colSpan={8} sx={{ py: 0, px: 0 }}>
+                                                                <TableCell colSpan={9} sx={{ py: 0, px: 0 }}>
                                                                     <Collapse
                                                                         in={expandedRows.has(session.id)}
                                                                         timeout="auto"
@@ -396,7 +474,7 @@ const DataView = () => {
                             <>
                                 <br /><br />
                                 <strong>Session Details:</strong><br />
-                                Date: {new Date(selectedSession.startTime).toLocaleDateString()}<br />
+                                Date: {new Date(selectedSession.startTime).toLocaleDateString(locale)}<br />
                                 Time: {formatTime(selectedSession.startTime)} - {selectedSession.endTime ? formatTime(selectedSession.endTime) : 'Ongoing'}<br />
                                 Net Duration: {formatDuration(selectedSession.netDuration)}
                             </>

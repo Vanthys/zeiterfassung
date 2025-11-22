@@ -9,19 +9,25 @@ const prisma = new PrismaClient();
 
 /**
  * GET /api/users
- * Get all users (authenticated users can see basic info, admin sees all)
+ * Get all users (authenticated users can see basic info, admin sees all in company)
  */
 router.get('/', authenticateToken, async (req, res) => {
     try {
+        // Only allow admins to see all users in their company
+        if (req.user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
         const users = await prisma.user.findMany({
+            where: { companyId: req.user.companyId },
             select: {
                 id: true,
-                email: req.user.role === 'ADMIN',
+                email: true,
                 firstName: true,
                 lastName: true,
-                role: req.user.role === 'ADMIN',
-                weeklyHoursTarget: req.user.role === 'ADMIN',
-                createdAt: req.user.role === 'ADMIN',
+                role: true,
+                weeklyHoursTarget: true,
+                createdAt: true,
             },
             orderBy: { email: 'asc' },
         });
@@ -34,11 +40,12 @@ router.get('/', authenticateToken, async (req, res) => {
 
 /**
  * GET /api/users/online
- * Get online status of all users
+ * Get online status of all users in company
  */
 router.get('/online', authenticateToken, async (req, res) => {
     try {
         const users = await prisma.user.findMany({
+            where: { companyId: req.user.companyId },
             select: {
                 id: true,
                 email: true,
@@ -116,9 +123,17 @@ router.put('/:id',
             const userId = parseInt(req.params.id);
             const { role, weeklyHoursTarget, firstName, lastName } = req.body;
 
-            // Check permissions: Admin can update anyone, User can only update self
+            // Check permissions: Admin can update anyone in company, User can only update self
             if (req.user.role !== 'ADMIN' && req.user.id !== userId) {
                 return res.status(403).json({ error: 'Access denied' });
+            }
+
+            // Verify user belongs to same company if admin is updating another user
+            if (req.user.role === 'ADMIN' && req.user.id !== userId) {
+                const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+                if (!targetUser || targetUser.companyId !== req.user.companyId) {
+                    return res.status(404).json({ error: 'User not found' });
+                }
             }
 
             // Only admin can update role
@@ -173,6 +188,12 @@ router.post('/:id/reset-password',
             const userId = parseInt(req.params.id);
             const { newPassword } = req.body;
 
+            // Verify user belongs to same company
+            const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+            if (!targetUser || targetUser.companyId !== req.user.companyId) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
             const hashedPassword = await bcrypt.hash(newPassword, 10);
 
             await prisma.user.update({
@@ -199,6 +220,12 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
         // Prevent deleting yourself
         if (userId === req.user.id) {
             return res.status(400).json({ error: 'Cannot delete your own account' });
+        }
+
+        // Verify user belongs to same company
+        const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+        if (!targetUser || targetUser.companyId !== req.user.companyId) {
+            return res.status(404).json({ error: 'User not found' });
         }
 
         await prisma.user.delete({

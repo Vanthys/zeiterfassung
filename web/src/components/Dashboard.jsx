@@ -32,6 +32,8 @@ const Dashboard = () => {
     const [error, setError] = useState('');
     const [currentTime, setCurrentTime] = useState(new Date());
 
+    const locale = user?.company?.country || 'en-US';
+
     // Update current time every second for live timer
     useEffect(() => {
         const timer = setInterval(() => {
@@ -165,28 +167,35 @@ const Dashboard = () => {
         }
     };
 
-    const formatDuration = (startTime, endTime = null) => {
-        const start = new Date(startTime);
-        const end = endTime ? new Date(endTime) : currentTime;
-        const diff = Math.max(0, end - start); // Ensure non-negative
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        return `${hours}h ${minutes}m ${seconds}s`;
-    };
-
     const formatTime = (date) => {
-        return new Date(date).toLocaleTimeString('en-US', {
+        return new Date(date).toLocaleTimeString(locale, {
             hour: '2-digit',
             minute: '2-digit'
         });
     };
 
     const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('en-US', {
+        return new Date(date).toLocaleDateString(locale, {
+            weekday: 'short',
+            year: 'numeric',
             month: 'short',
             day: 'numeric'
         });
+    };
+
+    const formatDuration = (startTime, endTime = null) => {
+        const start = new Date(startTime);
+        const end = endTime ? new Date(endTime) : currentTime;
+        const diff = Math.max(0, end - start); // Ensure non-negative
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        if (hours > 0) {
+            return `${hours}h ${minutes}m ${seconds}s`;
+        }
+        return `${minutes}m ${seconds}s`;
     };
 
     const getOngoingBreak = () => {
@@ -200,10 +209,6 @@ const Dashboard = () => {
 
     return (
         <Box>
-            <Typography variant="h4" gutterBottom>
-                Dashboard
-            </Typography>
-
             {error && (
                 <Alert severity="error" onClose={() => setError('')} sx={{ mb: 2 }}>
                     {error}

@@ -1,15 +1,18 @@
+import React, { useState, useEffect } from 'react';
 import { Paper, Stack, Typography, Box, Chip } from "@mui/material";
 import axios from "axios";
-import { useState, useEffect } from "react";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { format } from "date-fns";
+import { useAuth } from "../contexts/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const OnlineView = () => {
+    const { user } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const locale = user?.company?.country || 'en-US';
 
     useEffect(() => {
         const loadUsers = async () => {
@@ -46,16 +49,19 @@ const OnlineView = () => {
         return `${minutes}m`;
     };
 
+    const formatTime = (date) => {
+        return new Date(date).toLocaleTimeString(locale, {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
     if (loading) {
         return <Typography>Loading...</Typography>;
     }
 
     return (
         <Box>
-            <Typography variant="h4" gutterBottom>
-                Online Status
-            </Typography>
-
             <Stack spacing={2}>
                 {users.map((user) => {
                     const displayName = user.firstName || user.email?.split('@')[0] || 'User';
@@ -78,7 +84,7 @@ const OnlineView = () => {
                                                 icon={<CheckCircleIcon />}
                                             />
                                             <Typography variant="body2" color="text.secondary">
-                                                seit {format(new Date(user.time), 'HH:mm')} ({formatDuration(user.time)})
+                                                seit {formatTime(user.time)} ({formatDuration(user.time)})
                                             </Typography>
                                         </Stack>
                                     ) : (
@@ -90,7 +96,7 @@ const OnlineView = () => {
                                                 icon={<CancelIcon />}
                                             />
                                             <Typography variant="body2" color="text.secondary">
-                                                {user.time ? `zuletzt: ${format(new Date(user.time), 'HH:mm')}` : 'nie'}
+                                                {user.time ? `zuletzt: ${formatTime(user.time)}` : 'nie'}
                                             </Typography>
                                         </Stack>
                                     )}

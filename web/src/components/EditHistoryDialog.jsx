@@ -18,10 +18,13 @@ import {
     ArrowForward as ArrowIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const EditHistoryDialog = ({ open, onClose, entryId }) => {
+    const { user } = useAuth();
+    const locale = user?.company?.country || 'en-US';
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -58,7 +61,7 @@ const EditHistoryDialog = ({ open, onClose, entryId }) => {
     };
 
     const formatDateTime = (dateString) => {
-        return new Date(dateString).toLocaleString('en-US', {
+        return new Date(dateString).toLocaleString(locale, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',

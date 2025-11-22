@@ -26,6 +26,17 @@ enum BreakType {
   UNPAID
 }
 
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String?
+  country   String?  // Locale for reports
+  users     User[]
+  invites   Invite[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
   id                Int                 @id @default(autoincrement())
   email             String              @unique
@@ -34,6 +45,12 @@ model User {
   lastName          String?
   role              Role                @default(USER)
   weeklyHoursTarget Float               @default(40.0) // Expected weekly hours
+  
+  companyId         Int?                // Optional during migration, then required
+  company           Company?            @relation(fields: [companyId], references: [id])
+  
+  isPasswordChangeRequired Boolean      @default(false)
+  
   workSessions      WorkSession[]
   plannedSessions   PlannedSession[]
   sessionEdits      WorkSessionEdit[]   // Edits made by this user
@@ -42,6 +59,21 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([companyId])
+}
+
+model Invite {
+  id        Int      @id @default(autoincrement())
+  email     String
+  token     String   @unique
+  companyId Int
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  role      Role     @default(USER)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([email])
 }
 
 model WorkSession {

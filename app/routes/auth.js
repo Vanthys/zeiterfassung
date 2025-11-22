@@ -10,12 +10,13 @@ const prisma = new PrismaClient();
 
 /**
  * POST /api/auth/register
- * Register a new user
+ * Register a new user (Requires Invite Token)
  */
 router.post('/register',
     [
-        body('email').isEmail().normalizeEmail(),
+        body('email').isEmail(),
         body('password').isLength({ min: 6 }),
+        body('token').notEmpty().withMessage('Invite token is required'),
         body('firstName').optional().trim(),
         body('lastName').optional().trim(),
     ],
@@ -26,7 +27,27 @@ router.post('/register',
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const { email, password, firstName, lastName } = req.body;
+            const { email, password, token, firstName, lastName } = req.body;
+
+            // Validate invite
+            const invite = await prisma.invite.findUnique({
+                where: { token },
+                include: { company: true }
+            });
+
+            if (!invite) {
+                return res.status(400).json({ error: 'Invalid invite token' });
+            }
+
+            // Check if email matches (optional, but good security practice)
+            // Check if email matches (case-insensitive)
+            if (invite.email.toLowerCase() !== email.toLowerCase()) {
+                return res.status(400).json({ error: 'Email does not match invite' });
+            }
+
+            if (new Date() > invite.expiresAt) {
+                return res.status(400).json({ error: 'Invite expired' });
+            }
 
             // Check if user already exists
             const existingUser = await prisma.user.findUnique({
@@ -40,14 +61,16 @@ router.post('/register',
             // Hash password
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // Create user
+            // Create user linked to company
             const user = await prisma.user.create({
                 data: {
                     email,
                     password: hashedPassword,
                     firstName: firstName || null,
                     lastName: lastName || null,
-                    role: 'USER', // Default role
+                    role: invite.role, // Use role from invite
+                    companyId: invite.companyId,
+                    weeklyHoursTarget: 40.0,
                 },
                 select: {
                     id: true,
@@ -56,20 +79,24 @@ router.post('/register',
                     lastName: true,
                     role: true,
                     weeklyHoursTarget: true,
+                    companyId: true
                 }
             });
 
+            // Delete invite after successful registration
+            await prisma.invite.delete({ where: { id: invite.id } });
+
             // Generate JWT token
-            const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+            const jwtToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
 
             // Set cookie
-            res.cookie('token', token, {
+            res.cookie('token', jwtToken, {
                 httpOnly: true,
                 maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
                 sameSite: 'lax',
             });
 
-            res.json({ user, token });
+            res.json({ user, token: jwtToken });
         } catch (error) {
             console.error('Registration error:', error);
             res.status(500).json({ error: 'Registration failed' });
