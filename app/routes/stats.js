@@ -206,6 +206,101 @@ router.get('/sessions/:userId', authenticateToken, requireOwnerOrAdmin('userId')
 });
 
 /**
+ * GET /api/stats/audit-log
+ * Get audit log of all work session edits (admin only)
+ */
+router.get('/audit-log', authenticateToken, async (req, res) => {
+    try {
+        // Check if user is admin
+        if (req.user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const userId = req.query.userId ? parseInt(req.query.userId) : null;
+        const startDate = req.query.startDate ? new Date(req.query.startDate) : null;
+        const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
+        const limit = parseInt(req.query.limit) || 100;
+
+        // Build where clause
+        const where = {};
+
+        // Filter by company - get all users in admin's company
+        const companyUsers = await prisma.user.findMany({
+            where: { companyId: req.user.companyId },
+            select: { id: true }
+        });
+        const companyUserIds = companyUsers.map(u => u.id);
+
+        // Filter by specific user if provided
+        if (userId) {
+            // Verify user is in the same company
+            if (!companyUserIds.includes(userId)) {
+                return res.status(403).json({ error: 'User not in your company' });
+            }
+            where.workSession = {
+                userId: userId
+            };
+        } else {
+            // Filter by all company users
+            where.workSession = {
+                userId: { in: companyUserIds }
+            };
+        }
+
+        // Filter by date range
+        if (startDate || endDate) {
+            where.editedAt = {};
+            if (startDate) where.editedAt.gte = startDate;
+            if (endDate) where.editedAt.lte = endDate;
+        }
+
+        // Fetch audit log entries
+        const auditLog = await prisma.workSessionEdit.findMany({
+            where,
+            include: {
+                editor: {
+                    select: {
+                        id: true,
+                        email: true,
+                        firstName: true,
+                        lastName: true,
+                    }
+                },
+                workSession: {
+                    select: {
+                        id: true,
+                        startTime: true,
+                        endTime: true,
+                        status: true,
+                        user: {
+                            select: {
+                                id: true,
+                                email: true,
+                                firstName: true,
+                                lastName: true,
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: { editedAt: 'desc' },
+            take: limit,
+        });
+
+        // Parse changes JSON for each entry
+        const formattedLog = auditLog.map(entry => ({
+            ...entry,
+            changes: JSON.parse(entry.changes)
+        }));
+
+        res.json(formattedLog);
+    } catch (error) {
+        console.error('Error fetching audit log:', error);
+        res.status(500).json({ error: 'Failed to fetch audit log' });
+    }
+});
+
+/**
  * Helper function to get the start of the week (Monday)
  */
 function getWeekStart(date) {

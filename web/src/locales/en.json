@@ -6,6 +6,7 @@
         "onlineStatus": "Online Status",
         "companyOverview": "Company Overview",
         "invites": "Invites",
+        "auditLog": "Audit Log",
         "settings": "Settings",
         "logout": "Logout"
     },
@@ -98,7 +99,15 @@
         "progress": "Progress",
         "hours": "Hours",
         "target": "Target",
-        "complete": "complete"
+        "complete": "complete",
+        "selectUser": "Select User",
+        "date": "Date",
+        "start": "Start",
+        "end": "End",
+        "status": "Status",
+        "total": "Total",
+        "breaks": "Breaks",
+        "net": "Net"
     },
     "invites": {
         "title": "Invites",
@@ -164,5 +173,26 @@
         "unauthorized": "Unauthorized",
         "notFound": "Not found",
         "validation": "Validation error"
+    },
+    "auditLog": {
+        "title": "Audit Log",
+        "description": "View all historic edits to work sessions across your company",
+        "filterByUser": "Filter by User",
+        "allUsers": "All Users",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "applyFilters": "Apply Filters",
+        "clearFilters": "Clear Filters",
+        "noEdits": "No edits found",
+        "editDate": "Edit Date",
+        "editor": "Editor",
+        "employee": "Employee",
+        "sessionDate": "Session Date",
+        "reason": "Reason",
+        "noReason": "No reason provided",
+        "changes": "Changes",
+        "field": "Field",
+        "before": "Before",
+        "after": "After"
     }
 }

@@ -346,14 +346,16 @@ function generatePDFReport(sessions, user, year, month, locale, res) {
     let totalBreaks = 0;
 
     sessions.forEach(session => {
-        const y = doc.y;
+        // Save the current Y position for this row
+        const rowY = doc.y;
 
         // Check if we need a new page
-        if (y > 700) {
+        if (rowY > 700) {
             doc.addPage();
             doc.y = 50;
         }
 
+        const currentRowY = doc.y;
         x = 50;
         const rowData = [
             new Date(session.startTime).toLocaleDateString(locale),
@@ -364,12 +366,14 @@ function generatePDFReport(sessions, user, year, month, locale, res) {
             session.note || ''
         ];
 
+        // Write all columns at the same Y position
         rowData.forEach((data, i) => {
-            doc.text(data, x, doc.y, { width: colWidths[i], align: 'left' });
+            doc.text(data, x, currentRowY, { width: colWidths[i], align: 'left', lineBreak: false });
             x += colWidths[i];
         });
 
-        doc.moveDown(0.5);
+        // Move down for the next row
+        doc.y = currentRowY + 15;
 
         totalNet += session.netDuration || 0;
         totalBreaks += session.breakDuration || 0;
@@ -381,10 +385,11 @@ function generatePDFReport(sessions, user, year, month, locale, res) {
     doc.moveDown(0.5);
 
     doc.font('Helvetica-Bold');
+    const totalsY = doc.y;
     x = 50;
     const totalsData = ['', '', 'Total:', formatDuration(totalBreaks), formatDuration(totalNet), ''];
     totalsData.forEach((data, i) => {
-        doc.text(data, x, doc.y, { width: colWidths[i], align: 'left' });
+        doc.text(data, x, totalsY, { width: colWidths[i], align: 'left', lineBreak: false });
         x += colWidths[i];
     });
 

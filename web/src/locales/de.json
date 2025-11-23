@@ -6,6 +6,7 @@
         "onlineStatus": "Online-Status",
         "companyOverview": "Firmenübersicht",
         "invites": "Einladungen",
+        "auditLog": "Prüfprotokoll",
         "settings": "Einstellungen",
         "logout": "Abmelden"
     },
@@ -85,7 +86,15 @@
         "progress": "Fortschritt",
         "hours": "Stunden",
         "target": "Ziel",
-        "complete": "fertig"
+        "complete": "fertig",
+        "selectUser": "Nutzer auswählen",
+        "date": "Datum",
+        "start": "Start",
+        "end": "Ende",
+        "status": "Status",
+        "total": "Gesamt",
+        "breaks": "Pausen",
+        "net": "Nettoarbeitszeit"
     },
     "companyOverview": {
         "title": "Firmenübersicht",
@@ -164,5 +173,26 @@
         "unauthorized": "Nicht autorisiert",
         "notFound": "Nicht gefunden",
         "validation": "Validierungsfehler"
+    },
+    "auditLog": {
+        "title": "Prüfprotokoll",
+        "description": "Alle historischen Änderungen an Arbeitssitzungen in Ihrem Unternehmen anzeigen",
+        "filterByUser": "Nach Benutzer filtern",
+        "allUsers": "Alle Benutzer",
+        "startDate": "Startdatum",
+        "endDate": "Enddatum",
+        "applyFilters": "Filter anwenden",
+        "clearFilters": "Filter löschen",
+        "noEdits": "Keine Änderungen gefunden",
+        "editDate": "Änderungsdatum",
+        "editor": "Bearbeiter",
+        "employee": "Mitarbeiter",
+        "sessionDate": "Sitzungsdatum",
+        "reason": "Grund",
+        "noReason": "Kein Grund angegeben",
+        "changes": "Änderungen",
+        "field": "Feld",
+        "before": "Vorher",
+        "after": "Nachher"
     }
 }

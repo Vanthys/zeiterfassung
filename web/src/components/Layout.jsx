@@ -32,6 +32,7 @@ import {
     Logout as LogoutIcon,
     Settings as SettingsIcon,
     Mail as MailIcon,
+    History as HistoryIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -83,6 +84,7 @@ const Layout = ({ children }) => {
     const adminMenuItems = [
         { text: t('nav.invites'), icon: <MailIcon />, path: '/invites', show: isAdmin() },
         { text: t('nav.companyOverview'), icon: <AdminIcon />, path: '/company', show: isAdmin() },
+        { text: t('nav.auditLog'), icon: <HistoryIcon />, path: '/audit-log', show: isAdmin() },
     ];
 
     const getDisplayName = () => {

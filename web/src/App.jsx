@@ -14,6 +14,7 @@ import Settings from './components/Settings';
 import Calendar from './components/Calendar';
 import InviteManager from './components/InviteManager';
 import CompanyOverview from './components/CompanyOverview';
+import AuditLog from './components/AuditLog';
 import Layout from './components/Layout';
 
 // Theme definition
@@ -105,6 +106,13 @@ function App() {
               <RequireAuth>
                 <Layout>
                   <CompanyOverview />
+                </Layout>
+              </RequireAuth>
+            } />
+            <Route path="/audit-log" element={
+              <RequireAuth>
+                <Layout>
+                  <AuditLog />
                 </Layout>
               </RequireAuth>
             } />

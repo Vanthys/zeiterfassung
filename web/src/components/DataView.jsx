@@ -272,10 +272,10 @@ const DataView = () => {
                 <Card sx={{ mb: 3 }}>
                     <CardContent>
                         <FormControl fullWidth>
-                            <InputLabel>Select User</InputLabel>
+                            <InputLabel>{t("dataView.selectUser")}</InputLabel>
                             <Select
                                 value={selectedUserId}
-                                label="Select User"
+                                label={t("dataView.selectUser")}
                                 onChange={(e) => setSelectedUserId(e.target.value)}
                             >
                                 {users.map((u) => (
@@ -350,14 +350,14 @@ const DataView = () => {
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell width="50px"></TableCell>
-                                                    <TableCell>Date</TableCell>
-                                                    <TableCell>Start</TableCell>
-                                                    <TableCell>End</TableCell>
-                                                    <TableCell>Status</TableCell>
-                                                    <TableCell align="right">Total</TableCell>
-                                                    <TableCell align="right">Breaks</TableCell>
-                                                    <TableCell align="right">Net</TableCell>
-                                                    <TableCell align="right">Actions</TableCell>
+                                                    <TableCell>{t("dataView.date")}</TableCell>
+                                                    <TableCell>{t("dataView.start")}</TableCell>
+                                                    <TableCell>{t("dataView.end")}</TableCell>
+                                                    <TableCell>{t("dataView.status")}</TableCell>
+                                                    <TableCell align="right">{t("dataView.total")}</TableCell>
+                                                    <TableCell align="right">{t("dataView.breaks")}</TableCell>
+                                                    <TableCell align="right">{t("dataView.net")}</TableCell>
+                                                    <TableCell align="right">{t("common.actions")}</TableCell>
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
