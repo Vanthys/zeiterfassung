@@ -39,9 +39,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import EditSessionDialog from './EditSessionDialog';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -56,6 +54,9 @@ const DataView = () => {
     const [selectedSession, setSelectedSession] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [downloadingReport, setDownloadingReport] = useState(null); // 'pdf' or 'excel'
+
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (isAdmin()) {
@@ -179,70 +180,90 @@ const DataView = () => {
         return acc;
     }, {});
 
-    const exportPDF = (month, monthSessions) => {
-        const doc = new jsPDF();
-        const selectedUser = users.find(u => u.id === parseInt(selectedUserId)) || user;
+    const downloadPDF = async (month, monthSessions) => {
+        if (monthSessions.length === 0) {
+            setError('No sessions to export');
+            return;
+        }
 
-        doc.setFontSize(18);
-        doc.text(`Work Report - ${month}`, 14, 22);
+        setDownloadingReport('pdf');
+        setError('');
 
-        doc.setFontSize(12);
-        doc.text(`Employee: ${selectedUser.firstName || ''} ${selectedUser.lastName || selectedUser.email}`, 14, 32);
-        doc.text(`Generated: ${new Date().toLocaleDateString(locale)}`, 14, 38);
+        try {
+            // Get year and month from first session
+            const firstSession = monthSessions[0];
+            const date = new Date(firstSession.startTime);
+            const year = date.getFullYear();
+            const monthNum = date.getMonth() + 1;
 
-        const tableData = monthSessions.map(s => [
-            new Date(s.startTime).toLocaleDateString(locale),
-            formatTime(s.startTime),
-            s.endTime ? formatTime(s.endTime) : 'Ongoing',
-            formatDuration(s.breakDuration),
-            formatDuration(s.netDuration),
-            s.note || ''
-        ]);
+            const endpoint = isAdmin() && selectedUserId !== user.id
+                ? `/api/reports/pdf/${selectedUserId}`
+                : '/api/reports/pdf';
 
-        // Calculate totals
-        const totalNet = monthSessions.reduce((sum, s) => sum + (s.netDuration || 0), 0);
-        const totalBreaks = monthSessions.reduce((sum, s) => sum + (s.breakDuration || 0), 0);
+            const response = await axios.get(`${API_URL}${endpoint}`, {
+                params: { year, month: monthNum },
+                withCredentials: true,
+                responseType: 'blob'
+            });
 
-        doc.autoTable({
-            startY: 45,
-            head: [['Date', 'Start', 'End', 'Breaks', 'Net Duration', 'Note']],
-            body: tableData,
-            foot: [['', '', 'Total:', formatDuration(totalBreaks), formatDuration(totalNet), '']],
-        });
-
-        doc.save(`Work_Report_${month.replace(' ', '_')}.pdf`);
+            // Create download link
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Work_Report_${month.replace(' ', '_')}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Error downloading PDF:', err);
+            setError(err.response?.data?.error || 'Failed to download PDF report');
+        } finally {
+            setDownloadingReport(null);
+        }
     };
 
-    const exportExcel = (month, monthSessions) => {
-        const selectedUser = users.find(u => u.id === parseInt(selectedUserId)) || user;
+    const downloadExcel = async (month, monthSessions) => {
+        if (monthSessions.length === 0) {
+            setError('No sessions to export');
+            return;
+        }
 
-        const data = monthSessions.map(s => ({
-            Date: new Date(s.startTime).toLocaleDateString(locale),
-            Start: formatTime(s.startTime),
-            End: s.endTime ? formatTime(s.endTime) : 'Ongoing',
-            'Break Duration': formatDuration(s.breakDuration),
-            'Net Duration': formatDuration(s.netDuration),
-            Note: s.note || ''
-        }));
+        setDownloadingReport('excel');
+        setError('');
 
-        // Add totals row
-        const totalNet = monthSessions.reduce((sum, s) => sum + (s.netDuration || 0), 0);
-        const totalBreaks = monthSessions.reduce((sum, s) => sum + (s.breakDuration || 0), 0);
+        try {
+            // Get year and month from first session
+            const firstSession = monthSessions[0];
+            const date = new Date(firstSession.startTime);
+            const year = date.getFullYear();
+            const monthNum = date.getMonth() + 1;
 
-        data.push({
-            Date: 'TOTAL',
-            Start: '',
-            End: '',
-            'Break Duration': formatDuration(totalBreaks),
-            'Net Duration': formatDuration(totalNet),
-            Note: ''
-        });
+            const endpoint = isAdmin() && selectedUserId !== user.id
+                ? `/api/reports/excel/${selectedUserId}`
+                : '/api/reports/excel';
 
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Work Report");
+            const response = await axios.get(`${API_URL}${endpoint}`, {
+                params: { year, month: monthNum },
+                withCredentials: true,
+                responseType: 'blob'
+            });
 
-        XLSX.writeFile(wb, `Work_Report_${month.replace(' ', '_')}.xlsx`);
+            // Create download link
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Work_Report_${month.replace(' ', '_')}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Error downloading Excel:', err);
+            setError(err.response?.data?.error || 'Failed to download Excel report');
+        } finally {
+            setDownloadingReport(null);
+        }
     };
 
     return (
@@ -283,7 +304,7 @@ const DataView = () => {
                 <Card>
                     <CardContent>
                         <Typography color="text.secondary">
-                            No work sessions found. Start working to see your history!
+                            {t("dataView.noSessions")}
                         </Typography>
                     </CardContent>
                 </Card>
@@ -304,12 +325,20 @@ const DataView = () => {
                                                 color="primary"
                                             />
                                             <Tooltip title="Export PDF">
-                                                <IconButton onClick={() => exportPDF(month, monthSessions)} color="error">
+                                                <IconButton
+                                                    onClick={() => downloadPDF(month, monthSessions)}
+                                                    color="error"
+                                                    disabled={downloadingReport !== null}
+                                                >
                                                     <PdfIcon />
                                                 </IconButton>
                                             </Tooltip>
                                             <Tooltip title="Export Excel">
-                                                <IconButton onClick={() => exportExcel(month, monthSessions)} color="success">
+                                                <IconButton
+                                                    onClick={() => downloadExcel(month, monthSessions)}
+                                                    color="success"
+                                                    disabled={downloadingReport !== null}
+                                                >
                                                     <ExcelIcon />
                                                 </IconButton>
                                             </Tooltip>

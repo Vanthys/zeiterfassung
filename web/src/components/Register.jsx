@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Box,
     Card,
@@ -18,6 +19,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const Register = () => {
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
+    const { t } = useTranslation();
 
     const [formData, setFormData] = useState({
         email: '',

@@ -17,4 +17,5 @@ i18n
         }
     });
 
+document.documentElement.lang = i18n.language;
 export default i18n;

@@ -13,6 +13,7 @@ import {
 import { Save as SaveIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -26,6 +27,7 @@ const Settings = () => {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (user) {
@@ -61,7 +63,7 @@ const Settings = () => {
                 { withCredentials: true }
             );
 
-            setSuccess('Settings updated successfully');
+            setSuccess(t("settings.profileSuccess"));
             await checkAuth(); // Refresh user data in context
         } catch (err) {
             console.error('Error updating settings:', err);
@@ -77,7 +79,7 @@ const Settings = () => {
             <Card>
                 <CardContent>
                     <Typography variant="h6" gutterBottom>
-                        Profile Settings
+                        {t("settings.profile")}
                     </Typography>
                     <Divider sx={{ mb: 3 }} />
 
@@ -97,14 +99,14 @@ const Settings = () => {
                         <Stack spacing={3}>
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                                 <TextField
-                                    label="First Name"
+                                    label={t("settings.firstName")}
                                     name="firstName"
                                     value={formData.firstName}
                                     onChange={handleChange}
                                     fullWidth
                                 />
                                 <TextField
-                                    label="Last Name"
+                                    label={t("settings.lastName")}
                                     name="lastName"
                                     value={formData.lastName}
                                     onChange={handleChange}
@@ -113,13 +115,13 @@ const Settings = () => {
                             </Stack>
 
                             <TextField
-                                label="Weekly Hours Target"
+                                label={t("settings.weeklyHoursTarget")}
                                 name="weeklyHoursTarget"
                                 type="number"
                                 value={formData.weeklyHoursTarget}
                                 onChange={handleChange}
                                 inputProps={{ min: 0, step: 0.5 }}
-                                helperText="Target hours for weekly progress calculation"
+                                helperText={t("settings.weeklyHoursTargetHelperText")}
                                 fullWidth
                             />
 
@@ -130,7 +132,7 @@ const Settings = () => {
                                     startIcon={<SaveIcon />}
                                     disabled={loading}
                                 >
-                                    Save Changes
+                                    {t("common.save")}
                                 </Button>
                             </Box>
                         </Stack>

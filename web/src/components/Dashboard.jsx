@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getISOWeek } from 'date-fns';
 import {
     Box,
     Card,
@@ -6,7 +8,7 @@ import {
     Typography,
     Button,
     LinearProgress,
-    Grid,
+    Grid2,
     Chip,
     Stack,
     Alert,
@@ -25,6 +27,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Dashboard = () => {
     const { user } = useAuth();
+    const { t } = useTranslation();
     const [currentSession, setCurrentSession] = useState(null);
     const [recentSessions, setRecentSessions] = useState([]);
     const [weeklyStats, setWeeklyStats] = useState({ hours: 0, target: 40 });
@@ -215,19 +218,19 @@ const Dashboard = () => {
                 </Alert>
             )}
 
-            <Grid container spacing={3}>
+            <Grid2 container spacing={3}>
                 {/* Current Status Card */}
-                <Grid item xs={12} md={6}>
+                <Grid2 size={{ xs: 12, md: 6 }}>
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
-                                Current Status
+                                {t('dashboard.currentSession')}
                             </Typography>
 
                             {!currentSession && (
                                 <Box textAlign="center" py={3}>
                                     <Chip
-                                        label="Offline"
+                                        label={t('dashboard.noActiveSession')}
                                         color="default"
                                         sx={{ mb: 3, fontSize: '1.1rem', py: 2.5 }}
                                     />
@@ -240,7 +243,7 @@ const Dashboard = () => {
                                         onClick={handleStartWork}
                                         disabled={loading}
                                     >
-                                        Start Working
+                                        {t('dashboard.startWork')}
                                     </Button>
                                 </Box>
                             )}
@@ -249,7 +252,7 @@ const Dashboard = () => {
                                 <Box>
                                     <Stack direction="row" spacing={1} alignItems="center" mb={2}>
                                         <Chip
-                                            label="Working"
+                                            label={t('dashboard.workingFor')}
                                             color="success"
                                             icon={<TimerIcon />}
                                         />
@@ -271,7 +274,7 @@ const Dashboard = () => {
                                             onClick={handleStartBreak}
                                             disabled={loading}
                                         >
-                                            Take Break
+                                            {t('dashboard.startBreak')}
                                         </Button>
                                         <Button
                                             variant="contained"
@@ -281,7 +284,7 @@ const Dashboard = () => {
                                             onClick={handleStopWork}
                                             disabled={loading}
                                         >
-                                            Stop Working
+                                            {t('dashboard.stopWork')}
                                         </Button>
                                     </Stack>
                                 </Box>
@@ -291,7 +294,7 @@ const Dashboard = () => {
                                 <Box>
                                     <Stack direction="row" spacing={1} alignItems="center" mb={2}>
                                         <Chip
-                                            label="On Break"
+                                            label={t('dashboard.onBreak')}
                                             color="warning"
                                             icon={<BreakIcon />}
                                         />
@@ -315,26 +318,26 @@ const Dashboard = () => {
                                         onClick={handleEndBreak}
                                         disabled={loading}
                                     >
-                                        End Break
+                                        {t('dashboard.endBreak')}
                                     </Button>
                                 </Box>
                             )}
                         </CardContent>
                     </Card>
-                </Grid>
+                </Grid2>
 
                 {/* Weekly Progress Card */}
-                <Grid item xs={12} md={6}>
+                <Grid2 size={{ xs: 12, md: 6 }}>
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
-                                This Week
+                                {t('dataView.week')} {getISOWeek(new Date())}
                             </Typography>
 
                             <Box mb={2}>
                                 <Stack direction="row" justifyContent="space-between" mb={1}>
                                     <Typography variant="body2" color="text.secondary">
-                                        Progress
+                                        {t('dashboard.weeklyProgress')}
                                     </Typography>
                                     <Typography variant="body2" fontWeight="bold">
                                         {weeklyStats.hours?.toFixed(1) ?? 0}h / {weeklyStats.target}h
@@ -346,24 +349,24 @@ const Dashboard = () => {
                                     sx={{ height: 10, borderRadius: 5 }}
                                 />
                                 <Typography variant="caption" color="text.secondary" mt={0.5}>
-                                    {Math.round((weeklyStats.hours / weeklyStats.target) * 100)}% complete
+                                    {Math.round((weeklyStats.hours / weeklyStats.target) * 100)}% {t('dataView.complete')}
                                 </Typography>
                             </Box>
                         </CardContent>
                     </Card>
-                </Grid>
+                </Grid2>
 
                 {/* Recent Sessions */}
-                <Grid item xs={12}>
+                <Grid2 size={{ xs: 12 }}>
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
-                                Recent Sessions
+                                {t('dashboard.recentSessions')}
                             </Typography>
 
                             {recentSessions.length === 0 ? (
                                 <Typography color="text.secondary">
-                                    No sessions yet. Start working to see your history!
+                                    {t('dataView.noSessions')}
                                 </Typography>
                             ) : (
                                 <Stack spacing={2} divider={<Divider />}>
@@ -404,8 +407,8 @@ const Dashboard = () => {
                             )}
                         </CardContent>
                     </Card>
-                </Grid>
-            </Grid>
+                </Grid2>
+            </Grid2>
         </Box>
     );
 };

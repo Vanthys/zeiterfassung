@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -16,11 +17,20 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { i18n } = useTranslation();
 
     // Check if user is logged in on mount
     useEffect(() => {
         checkAuth();
     }, []);
+
+    // Update language when user changes
+    useEffect(() => {
+        if (user?.company?.country) {
+            const lang = user.company.country.split('-')[0].toLowerCase();
+            i18n.changeLanguage(lang);
+        }
+    }, [user, i18n]);
 
     const checkAuth = async () => {
         try {

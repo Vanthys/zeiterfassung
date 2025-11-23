@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Box,
     Card,
@@ -31,6 +32,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const InviteManager = () => {
     const { isAdmin, user } = useAuth();
+    const { t } = useTranslation();
     const locale = user?.company?.country || 'en-US';
     const [invites, setInvites] = useState([]);
     const [email, setEmail] = useState('');
@@ -99,16 +101,16 @@ const InviteManager = () => {
             <Card sx={{ mb: 4 }}>
                 <CardContent>
                     <Typography variant="h6" gutterBottom>
-                        Create New Invite
+                        {t('invites.inviteUser')}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                        Generate a secure invite link for a new employee. They will be added to your company upon registration.
+                    <Typography variant="body2" color="text.secondary" component="p" style={{ marginBottom: '1rem' }}>
+                        {t('invites.description')}
                     </Typography>
 
                     <form onSubmit={handleCreateInvite}>
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="flex-start">
                             <TextField
-                                label="Email Address"
+                                label={t('invites.email')}
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -124,7 +126,7 @@ const InviteManager = () => {
                                 startIcon={<SendIcon />}
                                 sx={{ minWidth: 120, height: 56 }}
                             >
-                                {loading ? 'Creating...' : 'Create'}
+                                {loading ? t('invites.creating') : t('invites.create')}
                             </Button>
                         </Stack>
                     </form>
@@ -147,12 +149,12 @@ const InviteManager = () => {
                 <Card sx={{ bgcolor: 'action.hover', mb: 4 }}>
                     <CardContent>
                         <Typography variant="h6" gutterBottom>
-                            Invite Created Successfully
+                            {t('invites.inviteCreated')}
                         </Typography>
 
                         <Box sx={{ mt: 2 }}>
                             <Typography variant="subtitle2" color="text.secondary">
-                                Invite Link:
+                                {t('invites.inviteLink')}
                             </Typography>
                             <Paper
                                 variant="outlined"
@@ -182,7 +184,7 @@ const InviteManager = () => {
                                 </Tooltip>
                             </Paper>
                             <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                                Share this link with {lastInvite.email}. It will expire in 7 days.
+                                {t('invites.shareText', { email: lastInvite.email })}
                             </Typography>
                         </Box>
                     </CardContent>
@@ -190,24 +192,24 @@ const InviteManager = () => {
             )}
 
             <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-                Active Invites
+                {t('invites.activeInvites')}
             </Typography>
 
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell>Email</TableCell>
-                            <TableCell>Created</TableCell>
-                            <TableCell>Expires</TableCell>
-                            <TableCell align="right">Actions</TableCell>
+                            <TableCell>{t('invites.email')}</TableCell>
+                            <TableCell>{t('invites.created')}</TableCell>
+                            <TableCell>{t('invites.expires')}</TableCell>
+                            <TableCell align="right">{t('common.actions')}</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {invites.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={4} align="center">
-                                    No active invites found.
+                                    {t('invites.noActiveInvites')}
                                 </TableCell>
                             </TableRow>
                         ) : (

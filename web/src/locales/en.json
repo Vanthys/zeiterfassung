@@ -21,6 +21,7 @@
         "hoursWorked": "Hours Worked",
         "targetHours": "Target Hours",
         "noActiveSession": "No Active Session",
+        "noSessions": "No Recent Sessions",
         "workingFor": "Working for",
         "onBreak": "On Break",
         "paused": "Paused"
@@ -73,15 +74,31 @@
         "newPassword": "New Password",
         "confirmPassword": "Confirm Password",
         "save": "Save",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "profileSuccess": "Profile updated successfully",
+        "weeklyHoursTargetHelperText": "Target hours for weekly progress calculation",
+        "weeklyHoursTarget": "Weekly Hours Target"
     },
     "companyOverview": {
         "title": "Company Overview",
         "companyName": "Company Name",
         "country": "Country",
-        "employees": "Employees",
+        "employees": "Team Members",
+        "employee": "Employee",
         "totalHours": "Total Hours",
-        "thisMonth": "This Month"
+        "thisMonth": "This Month",
+        "editDialogTitle": "Edit Company Details",
+        "address": "Address",
+        "countryHelperText": "Used for date and currency formatting",
+        "targetHours": "Target Hours"
+    },
+    "dataView": {
+        "noSessions": "No work sessions found. Start working to see your history!",
+        "week": "Week",
+        "progress": "Progress",
+        "hours": "Hours",
+        "target": "Target",
+        "complete": "complete"
     },
     "invites": {
         "title": "Invites",
@@ -93,7 +110,17 @@
         "accepted": "Accepted",
         "expired": "Expired",
         "resend": "Resend",
-        "delete": "Delete"
+        "delete": "Delete",
+        "create": "Create",
+        "creating": "Creating",
+        "inviteCreated": "Invite Created Successfully",
+        "inviteLink": "Invite Link",
+        "shareText": "Share this link with {{email}}. It will expire in 7 days.",
+        "description": "Generate a secure invite link for a new employee. They will be added to your company upon registration.",
+        "activeInvites": "Active Invites",
+        "noActiveInvites": "No active invites found.",
+        "created": "Created",
+        "expires": "Expires"
     },
     "auth": {
         "login": "Login",
@@ -112,15 +139,22 @@
         "signUp": "Sign Up"
     },
     "common": {
+        "edit": "anpassen",
+        "actions": "Actions",
         "loading": "Loading...",
         "error": "Error",
         "success": "Success",
         "confirm": "Confirm",
+        "save": "Save",
+        "saving": "Saving...",
+        "cancel": "Cancel",
         "yes": "Yes",
         "no": "No",
         "close": "Close",
         "search": "Search",
         "filter": "Filter",
+        "copy": "Copy",
+        "delete": "Delete",
         "sort": "Sort",
         "refresh": "Refresh"
     },

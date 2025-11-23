@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth, endOfWeek } from 'date-fns';
 import { de, enUS, fr, es, it } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import {
     Box,
@@ -42,6 +43,7 @@ const locales = {
 const Calendar = () => {
     const { user } = useAuth();
     const theme = useTheme();
+    const { t } = useTranslation();
     const [events, setEvents] = useState([]);
     const [view, setView] = useState(Views.WEEK);
     const [date, setDate] = useState(new Date());
@@ -270,14 +272,14 @@ const Calendar = () => {
                     {isAdmin && (
                         <Box sx={{ mb: 2 }}>
                             <FormControl size="small" sx={{ minWidth: 250 }}>
-                                <InputLabel>View Calendar</InputLabel>
+                                <InputLabel>{t('calendar.viewCalendar')}</InputLabel>
                                 <Select
                                     value={selectedUserId}
-                                    label="View Calendar"
+                                    label={t('calendar.viewCalendar')}
                                     onChange={(e) => setSelectedUserId(e.target.value)}
                                 >
-                                    <MenuItem value="me">My Calendar</MenuItem>
-                                    <MenuItem value="all">All Team Members</MenuItem>
+                                    <MenuItem value="me">{t('calendar.myCalendar')}</MenuItem>
+                                    <MenuItem value="all">{t('calendar.allTeam')}</MenuItem>
                                     {companyUsers.map(u => (
                                         <MenuItem key={u.id} value={u.id.toString()}>
                                             {u.firstName} {u.lastName}
@@ -322,19 +324,19 @@ const Calendar = () => {
 
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
                 <DialogTitle>
-                    {selectedEvent ? 'Edit Planned Session' : 'Plan Work Session'}
+                    {selectedEvent ? t('calendar.editSession') : t('calendar.planSession')}
                 </DialogTitle>
                 <DialogContent>
                     <Box sx={{ pt: 1, minWidth: 300 }}>
                         <TextField
                             autoFocus
                             margin="dense"
-                            label="Note (optional)"
+                            label={t('calendar.note')}
                             fullWidth
                             variant="outlined"
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
-                            placeholder="e.g., Deep Work, Meetings"
+                            placeholder={t('calendar.notePlaceholder')}
                         />
 
                         <FormControlLabel
@@ -348,7 +350,7 @@ const Calendar = () => {
                             label={
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <PhoneIcon fontSize="small" />
-                                    <span>On-Call</span>
+                                    <span>{t('calendar.onCall')}</span>
                                 </Box>
                             }
                             sx={{ mt: 2 }}
@@ -364,11 +366,11 @@ const Calendar = () => {
                 <DialogActions>
                     {selectedEvent && (
                         <Button onClick={handleDelete} color="error" startIcon={<DeleteIcon />}>
-                            Delete
+                            {t('calendar.delete')}
                         </Button>
                     )}
-                    <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-                    <Button onClick={handleSave} variant="contained">Save</Button>
+                    <Button onClick={() => setOpenDialog(false)}>{t('calendar.cancel')}</Button>
+                    <Button onClick={handleSave} variant="contained">{t('calendar.save')}</Button>
                 </DialogActions>
             </Dialog>
         </Box>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     Container,
     Paper,
@@ -15,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 const Login = () => {
     const navigate = useNavigate();
     const { login } = useAuth();
+    const { t } = useTranslation();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -60,7 +62,7 @@ const Login = () => {
                         Zeiterfassung
                     </Typography>
                     <Typography variant="h6" gutterBottom align="center" color="text.secondary">
-                        Login
+                        {t('auth.login')}
                     </Typography>
 
                     {error && (
@@ -72,7 +74,7 @@ const Login = () => {
                     <form onSubmit={handleSubmit}>
                         <TextField
                             fullWidth
-                            label="Email"
+                            label={t('auth.email')}
                             name="email"
                             type="email"
                             value={formData.email}
@@ -83,7 +85,7 @@ const Login = () => {
                         />
                         <TextField
                             fullWidth
-                            label="Password"
+                            label={t('auth.password')}
                             name="password"
                             type="password"
                             value={formData.password}
@@ -99,15 +101,15 @@ const Login = () => {
                             disabled={loading}
                             sx={{ mt: 3, mb: 2 }}
                         >
-                            {loading ? 'Logging in...' : 'Login'}
+                            {loading ? t('common.loading') : t('auth.signIn')}
                         </Button>
                     </form>
 
                     <Box textAlign="center" mt={2}>
                         <Typography variant="body2">
-                            Don't have an account?{' '}
+                            {t('auth.noAccount')}{' '}
                             <Link component={RouterLink} to="/register">
-                                Register here
+                                {t('auth.signUp')}
                             </Link>
                         </Typography>
                     </Box>

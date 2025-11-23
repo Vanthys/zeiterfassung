@@ -2,7 +2,7 @@
     "nav": {
         "dashboard": "Dashboard",
         "calendar": "Kalender",
-        "workHistory": "Arbeitshistorie",
+        "workHistory": "Arbeitsverlauf",
         "onlineStatus": "Online-Status",
         "companyOverview": "Firmenübersicht",
         "invites": "Einladungen",
@@ -21,6 +21,7 @@
         "hoursWorked": "Stunden gearbeitet",
         "targetHours": "Zielstunden",
         "noActiveSession": "Keine aktive Sitzung",
+        "noSessions": "Keine kürzlichen Arbeitszeiten",
         "workingFor": "Arbeitet seit",
         "onBreak": "In Pause",
         "paused": "Pausiert"
@@ -40,7 +41,7 @@
         "allTeam": "Alle Teammitglieder"
     },
     "workHistory": {
-        "title": "Arbeitshistorie",
+        "title": "Arbeitsverlauf",
         "date": "Datum",
         "start": "Start",
         "end": "Ende",
@@ -73,15 +74,31 @@
         "newPassword": "Neues Passwort",
         "confirmPassword": "Passwort bestätigen",
         "save": "Speichern",
-        "cancel": "Abbrechen"
+        "cancel": "Abbrechen",
+        "profileSuccess": "Profile erfolgreich aktualisiert",
+        "weeklyHoursTargetHelperText": "Zielarbeitsstunden für die Wochenfortschrittsberechnung",
+        "weeklyHoursTarget": "Zielarbeitsstunden"
+    },
+    "dataView": {
+        "noSessions": "Keine Arbeitszeiten gefunden. Beginnen Sie mit der Arbeit, um Ihren Verlauf zu sehen!",
+        "week": "Kalenderwoche",
+        "progress": "Fortschritt",
+        "hours": "Stunden",
+        "target": "Ziel",
+        "complete": "fertig"
     },
     "companyOverview": {
         "title": "Firmenübersicht",
         "companyName": "Firmenname",
         "country": "Land",
+        "targetHours": "Zielstunden",
         "employees": "Mitarbeiter",
+        "employee": "Mitarbeiter",
         "totalHours": "Gesamtstunden",
-        "thisMonth": "Diesen Monat"
+        "thisMonth": "Diesen Monat",
+        "editDialogTitle": "Firmendaten bearbeiten",
+        "address": "Adresse",
+        "countryHelperText": "Wird für Datum und Währungformatierung verwendet"
     },
     "invites": {
         "title": "Einladungen",
@@ -93,7 +110,17 @@
         "accepted": "Akzeptiert",
         "expired": "Abgelaufen",
         "resend": "Erneut senden",
-        "delete": "Löschen"
+        "delete": "Löschen",
+        "create": "Erzeugen",
+        "creating": "Erzeugen...",
+        "inviteCreated": "Einladungslink erzeugt",
+        "inviteLink": "Einladungslink",
+        "sharetext": "Teilen Sie diesen Link mit {{email}}. Er wird in 7 Tagen ablaufen.",
+        "description": "Erstellen Sie einen sicheren Einladungslink für einen neuen Mitarbeiter. Dieser wird nach der Registrierung zu Ihrem Unternehmen hinzugefügt.",
+        "activeInvites": "Aktive Einladungen",
+        "noActiveInvites": "Keine Aktiven Einladungen",
+        "created": "Erzeugt",
+        "expires": "Läuft ab"
     },
     "auth": {
         "login": "Anmelden",
@@ -112,15 +139,22 @@
         "signUp": "Registrieren"
     },
     "common": {
+        "edit": "anpassen",
+        "actions": "Aktionen",
         "loading": "Lädt...",
         "error": "Fehler",
         "success": "Erfolg",
         "confirm": "Bestätigen",
+        "save": "Speichern",
+        "saving": "Speichern...",
+        "cancel": "Abbrechen",
         "yes": "Ja",
         "no": "Nein",
         "close": "Schließen",
         "search": "Suchen",
         "filter": "Filtern",
+        "copy": "Kopieren",
+        "delete": "Löschen",
         "sort": "Sortieren",
         "refresh": "Aktualisieren"
     },

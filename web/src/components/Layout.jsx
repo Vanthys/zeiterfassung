@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     Box,
     Drawer,
@@ -42,6 +43,7 @@ const Layout = ({ children }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const { user, logout, isAdmin } = useAuth();
+    const { t } = useTranslation();
 
     const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
@@ -72,16 +74,15 @@ const Layout = ({ children }) => {
     };
 
     const menuItems = [
-        { text: 'Dashboard', icon: <HomeIcon />, path: '/', show: true },
-        { text: 'Online Status', icon: <PeopleIcon />, path: '/online', show: true },
-        { text: 'Work History', icon: <BarChartIcon />, path: '/history', show: true },
-        { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar', show: true },
+        { text: t('nav.dashboard'), icon: <HomeIcon />, path: '/', show: true },
+        { text: t('nav.onlineStatus'), icon: <PeopleIcon />, path: '/online', show: true },
+        { text: t('nav.workHistory'), icon: <BarChartIcon />, path: '/history', show: true },
+        { text: t('nav.calendar'), icon: <CalendarIcon />, path: '/calendar', show: true },
     ];
 
     const adminMenuItems = [
-        { text: 'Invites', icon: <MailIcon />, path: '/invites', show: isAdmin() },
-        { text: 'Company', icon: <AdminIcon />, path: '/company', show: isAdmin() },
-        // { text: 'User Management', icon: <AdminIcon />, path: '/admin/users', show: isAdmin() },
+        { text: t('nav.invites'), icon: <MailIcon />, path: '/invites', show: isAdmin() },
+        { text: t('nav.companyOverview'), icon: <AdminIcon />, path: '/company', show: isAdmin() },
     ];
 
     const getDisplayName = () => {
@@ -143,7 +144,7 @@ const Layout = ({ children }) => {
                         <ListItemIcon>
                             <SettingsIcon />
                         </ListItemIcon>
-                        <ListItemText primary="Settings" />
+                        <ListItemText primary={t('nav.settings')} />
                     </ListItemButton>
                 </ListItem>
             </List>
@@ -172,7 +173,7 @@ const Layout = ({ children }) => {
                     <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
                         {menuItems.find(item => item.path === location.pathname)?.text ||
                             adminMenuItems.find(item => item.path === location.pathname)?.text ||
-                            (location.pathname === '/settings' ? 'Settings' : 'Zeiterfassung')}
+                            (location.pathname === '/settings' ? t('nav.settings') : 'Zeiterfassung')}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Typography variant="body2">
@@ -223,14 +224,14 @@ const Layout = ({ children }) => {
                             <ListItemIcon>
                                 <SettingsIcon fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Settings</ListItemText>
+                            <ListItemText>{t('nav.settings')}</ListItemText>
                         </MenuItem>
                         <Divider />
                         <MenuItem onClick={handleLogout}>
                             <ListItemIcon>
                                 <LogoutIcon fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Logout</ListItemText>
+                            <ListItemText>{t('nav.logout')}</ListItemText>
                         </MenuItem>
                     </Menu>
                 </Toolbar>

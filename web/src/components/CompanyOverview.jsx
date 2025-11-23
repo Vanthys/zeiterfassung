@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Box,
     Card,
@@ -36,6 +37,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const CompanyOverview = () => {
     const { isAdmin } = useAuth();
+    const { t } = useTranslation();
     const [users, setUsers] = useState([]);
     const [company, setCompany] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -109,9 +111,6 @@ const CompanyOverview = () => {
 
     return (
         <Box>
-            <Typography variant="h4" gutterBottom>
-                Company Overview
-            </Typography>
 
             {error && (
                 <Alert severity="error" sx={{ mb: 2 }}>
@@ -126,24 +125,24 @@ const CompanyOverview = () => {
                         <CardContent>
                             <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                                 <Typography variant="h6" gutterBottom>
-                                    Company Details
+                                    {t('companyOverview.companyName')}
                                 </Typography>
                                 <Button
                                     startIcon={<EditIcon />}
                                     size="small"
                                     onClick={handleEditClick}
                                 >
-                                    Edit
+                                    {t('common.edit')}
                                 </Button>
                             </Stack>
 
                             {loading ? (
-                                <Typography>Loading...</Typography>
+                                <Typography>{t('common.loading')}</Typography>
                             ) : company ? (
                                 <Box mt={2}>
                                     <Stack spacing={2}>
                                         <Box>
-                                            <Typography variant="caption" color="text.secondary">Name</Typography>
+                                            <Typography variant="caption" color="text.secondary">{t('companyOverview.companyName')}</Typography>
                                             <Typography variant="body1" fontWeight="medium">{company.name}</Typography>
                                         </Box>
                                         <Box>
@@ -153,7 +152,7 @@ const CompanyOverview = () => {
                                             </Typography>
                                         </Box>
                                         <Box>
-                                            <Typography variant="caption" color="text.secondary">Country / Locale</Typography>
+                                            <Typography variant="caption" color="text.secondary">{t('companyOverview.country')}</Typography>
                                             <Typography variant="body1">
                                                 {company.country || 'Not set'}
                                             </Typography>
@@ -172,17 +171,17 @@ const CompanyOverview = () => {
                     <Card sx={{ height: '100%' }}>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
-                                Team Members
+                                {t('companyOverview.employees')}
                             </Typography>
 
                             <TableContainer component={Paper} variant="outlined">
                                 <Table>
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell>Employee</TableCell>
-                                            <TableCell>Email</TableCell>
-                                            <TableCell>Role</TableCell>
-                                            <TableCell>Target</TableCell>
+                                            <TableCell>{t('companyOverview.employee')}</TableCell>
+                                            <TableCell>{t('invites.email')}</TableCell>
+                                            <TableCell>{t('invites.role')}</TableCell>
+                                            <TableCell>{t('companyOverview.targetHours')}</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -231,11 +230,11 @@ const CompanyOverview = () => {
 
             {/* Edit Dialog */}
             <Dialog open={openEdit} onClose={() => setOpenEdit(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Edit Company Details</DialogTitle>
+                <DialogTitle>{t('companyOverview.editDialogTitle')}</DialogTitle>
                 <DialogContent>
                     <Box component="form" sx={{ mt: 1 }}>
                         <TextField
-                            label="Company Name"
+                            label={t('companyOverview.companyName')}
                             fullWidth
                             margin="normal"
                             value={editForm.name}
@@ -243,7 +242,7 @@ const CompanyOverview = () => {
                             required
                         />
                         <TextField
-                            label="Address"
+                            label={t('companyOverview.address')}
                             fullWidth
                             margin="normal"
                             multiline
@@ -252,19 +251,19 @@ const CompanyOverview = () => {
                             onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                         />
                         <TextField
-                            label="Country / Locale (e.g., de-DE)"
+                            label={t('companyOverview.country')}
                             fullWidth
                             margin="normal"
                             value={editForm.country}
                             onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
-                            helperText="Used for date and currency formatting"
+                            helperText={t('companyOverview.countryHelperText')}
                         />
                     </Box>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenEdit(false)}>Cancel</Button>
+                    <Button onClick={() => setOpenEdit(false)}>{t('common.cancel')}</Button>
                     <Button onClick={handleSave} variant="contained" disabled={saving}>
-                        {saving ? 'Saving...' : 'Save'}
+                        {saving ? t('common.saving') : t('common.save')}
                     </Button>
                 </DialogActions>
             </Dialog>
