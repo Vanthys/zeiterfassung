@@ -9,6 +9,102 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 /**
+ * POST /api/auth/register-company
+ * Register a new company with an admin user (No invite required)
+ */
+router.post('/register-company',
+    [
+        body('email').isEmail().normalizeEmail(),
+        body('password').isLength({ min: 6 }),
+        body('companyName').trim().notEmpty().withMessage('Company name is required'),
+        body('firstName').optional().trim(),
+        body('lastName').optional().trim(),
+        body('country').optional().trim(),
+        body('address').optional().trim(),
+    ],
+    async (req, res) => {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() });
+            }
+
+            const { email, password, companyName, firstName, lastName, country, address } = req.body;
+
+            // Check if user already exists
+            const existingUser = await prisma.user.findUnique({
+                where: { email }
+            });
+
+            if (existingUser) {
+                return res.status(400).json({ error: 'Email already exists' });
+            }
+
+            // Hash password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Create company and admin user in a transaction
+            const result = await prisma.$transaction(async (tx) => {
+                // Create company
+                const company = await tx.company.create({
+                    data: {
+                        name: companyName,
+                        country: country || null,
+                        address: address || null,
+                    }
+                });
+
+                // Create admin user
+                const user = await tx.user.create({
+                    data: {
+                        email,
+                        password: hashedPassword,
+                        firstName: firstName || null,
+                        lastName: lastName || null,
+                        role: 'ADMIN', // First user is always admin
+                        companyId: company.id,
+                        weeklyHoursTarget: 40.0,
+                    },
+                    select: {
+                        id: true,
+                        email: true,
+                        firstName: true,
+                        lastName: true,
+                        role: true,
+                        weeklyHoursTarget: true,
+                        companyId: true,
+                        company: {
+                            select: {
+                                id: true,
+                                name: true,
+                                country: true,
+                            }
+                        }
+                    }
+                });
+
+                return user;
+            });
+
+            // Generate JWT token
+            const jwtToken = jwt.sign({ userId: result.id }, JWT_SECRET, { expiresIn: '7d' });
+
+            // Set cookie
+            res.cookie('token', jwtToken, {
+                httpOnly: true,
+                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+                sameSite: 'lax',
+            });
+
+            res.json({ user: result, token: jwtToken });
+        } catch (error) {
+            console.error('Company registration error:', error);
+            res.status(500).json({ error: 'Company registration failed' });
+        }
+    }
+);
+
+/**
  * POST /api/auth/register
  * Register a new user (Requires Invite Token)
  */

@@ -3,9 +3,11 @@
 ## Overview
 
 This Docker setup includes:
+- **Single Container Architecture**: Frontend (React) is built and served by the backend
 - **External Database Mount**: Database stored in `./data` directory on host
 - **Environment File**: All configuration via `.env` file
-- **Single Container**: Runs both backend and serves frontend
+
+The Dockerfile builds the React frontend and the Node.js backend serves both the API and the static frontend files.
 
 ## Quick Start
 
