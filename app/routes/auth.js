@@ -92,6 +92,7 @@ router.post('/register-company',
             // Set cookie
             res.cookie('token', jwtToken, {
                 httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
                 maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
                 sameSite: 'lax',
             });
@@ -99,7 +100,10 @@ router.post('/register-company',
             res.json({ user: result, token: jwtToken });
         } catch (error) {
             console.error('Company registration error:', error);
-            res.status(500).json({ error: 'Company registration failed' });
+            res.status(500).json({
+                error: 'Company registration failed',
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
         }
     }
 );
@@ -188,6 +192,7 @@ router.post('/register',
             // Set cookie
             res.cookie('token', jwtToken, {
                 httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
                 maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
                 sameSite: 'lax',
             });
@@ -239,6 +244,7 @@ router.post('/login',
             // Set cookie
             res.cookie('token', token, {
                 httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
                 maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
                 sameSite: 'lax',
             });
