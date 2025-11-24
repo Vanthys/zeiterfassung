@@ -2,7 +2,10 @@ version: '3.8'
 
 services:
   zeiterfassung:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://zeiterfassung.skumantz.dev}
     container_name: zeiterfassung-app
     # This single container serves both the frontend (built React app) and backend API
     # The Dockerfile builds the frontend and the backend serves it as static files
