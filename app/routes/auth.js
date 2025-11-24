@@ -141,6 +141,13 @@ router.post('/register',
 
             // Check if email matches (optional, but good security practice)
             // Check if email matches (case-insensitive)
+            console.log('Email comparison:', {
+                inviteEmail: invite.email,
+                inviteEmailLower: invite.email.toLowerCase(),
+                providedEmail: email,
+                providedEmailLower: email.toLowerCase()
+            });
+
             if (invite.email.toLowerCase() !== email.toLowerCase()) {
                 return res.status(400).json({ error: 'Email does not match invite' });
             }

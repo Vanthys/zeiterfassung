@@ -18,7 +18,7 @@ const getFrontendUrl = () => {
  * Create a new invite (Admin only)
  */
 router.post('/', authenticateToken, requireAdmin, [
-    body('email').isEmail().withMessage('Valid email is required'),
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
