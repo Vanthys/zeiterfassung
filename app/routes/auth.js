@@ -14,7 +14,7 @@ const prisma = new PrismaClient();
  */
 router.post('/register-company',
     [
-        body('email').isEmail().normalizeEmail(),
+        body('email').isEmail(),
         body('password').isLength({ min: 6 }),
         body('companyName').trim().notEmpty().withMessage('Company name is required'),
         body('firstName').optional().trim(),
@@ -29,7 +29,8 @@ router.post('/register-company',
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const { email, password, companyName, firstName, lastName, country, address } = req.body;
+            const { email: rawEmail, password, companyName, firstName, lastName, country, address } = req.body;
+            const email = rawEmail.toLowerCase();
 
             // Check if user already exists
             const existingUser = await prisma.user.findUnique({
@@ -114,7 +115,7 @@ router.post('/register-company',
  */
 router.post('/register',
     [
-        body('email').isEmail().normalizeEmail(),
+        body('email').isEmail(),
         body('password').isLength({ min: 6 }),
         body('token').notEmpty().withMessage('Invite token is required'),
         body('firstName').optional().trim(),
@@ -127,7 +128,8 @@ router.post('/register',
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const { email, password, token, firstName, lastName } = req.body;
+            const { email: rawEmail, password, token, firstName, lastName } = req.body;
+            const email = rawEmail.toLowerCase();
 
             // Validate invite
             const invite = await prisma.invite.findUnique({
@@ -218,7 +220,7 @@ router.post('/register',
  */
 router.post('/login',
     [
-        body('email').isEmail().normalizeEmail(),
+        body('email').isEmail(),
         body('password').notEmpty(),
     ],
     async (req, res) => {
@@ -228,7 +230,8 @@ router.post('/login',
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const { email, password } = req.body;
+            const { email: rawEmail, password } = req.body;
+            const email = rawEmail.toLowerCase();
 
             // Find user
             const user = await prisma.user.findUnique({

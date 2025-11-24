@@ -18,7 +18,7 @@ const getFrontendUrl = () => {
  * Create a new invite (Admin only)
  */
 router.post('/', authenticateToken, requireAdmin, [
-    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('email').isEmail().withMessage('Valid email is required'),
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -26,7 +26,8 @@ router.post('/', authenticateToken, requireAdmin, [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { email } = req.body;
+        const { email: rawEmail } = req.body;
+        const email = rawEmail.toLowerCase();
 
         // Check if user already exists
         const existingUser = await prisma.user.findUnique({ where: { email } });
