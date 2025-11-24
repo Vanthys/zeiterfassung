@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./time_tracking.db"
+  url      = "file:../data/time_tracking.db"
 }
 
 enum Role {

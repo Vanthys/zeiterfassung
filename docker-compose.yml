@@ -17,8 +17,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5000}
     volumes:
-      # Mount database directory externally for persistence
-      - ./data:/app/prisma
+      # Mount only the database file for persistence (not the entire prisma directory)
+      - ./data:/app/data
     env_file:
       - .env
     restart: unless-stopped
