@@ -18,6 +18,13 @@ COPY app/ .
 # Install dependencies with pre-built binaries (much faster)
 RUN npm install
 
+# Generate Prisma client
+RUN npx prisma generate
+
+# Copy and set permissions for entrypoint script
+COPY app/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 5000
 
-CMD ["node", "server.js"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
