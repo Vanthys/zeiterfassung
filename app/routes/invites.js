@@ -7,6 +7,12 @@ const crypto = require('crypto');
 const router = express.Router();
 const prisma = new PrismaClient();
 
+// Helper to get frontend URL without trailing slash
+const getFrontendUrl = () => {
+    const url = process.env.FRONTEND_URL || 'http://localhost:5173';
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+
 /**
  * POST /api/invites
  * Create a new invite (Admin only)
@@ -45,7 +51,7 @@ router.post('/', authenticateToken, requireAdmin, [
 
         res.json({
             message: 'Invite created',
-            inviteLink: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/register?token=${token}`,
+            inviteLink: `${getFrontendUrl()}/register?token=${token}`,
             token
         });
 
@@ -73,7 +79,7 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
         // Add full link to response
         const invitesWithLinks = invites.map(invite => ({
             ...invite,
-            link: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/register?token=${invite.token}`
+            link: `${getFrontendUrl()}/register?token=${invite.token}`
         }));
 
         res.json(invitesWithLinks);

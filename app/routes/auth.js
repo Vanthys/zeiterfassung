@@ -114,7 +114,7 @@ router.post('/register-company',
  */
 router.post('/register',
     [
-        body('email').isEmail(),
+        body('email').isEmail().normalizeEmail(),
         body('password').isLength({ min: 6 }),
         body('token').notEmpty().withMessage('Invite token is required'),
         body('firstName').optional().trim(),
@@ -229,11 +229,16 @@ router.post('/login',
             });
 
             if (!user) {
+                console.log(`Login failed: User not found for email: ${email}`);
                 return res.status(401).json({ error: 'Invalid credentials' });
             }
 
+            console.log(`Login attempt for user: ${user.email} (ID: ${user.id})`);
+
             // Check password
             const validPassword = await bcrypt.compare(password, user.password);
+            console.log(`Password valid: ${validPassword}`);
+
             if (!validPassword) {
                 return res.status(401).json({ error: 'Invalid credentials' });
             }
