@@ -78,7 +78,11 @@
         "cancel": "Abbrechen",
         "profileSuccess": "Profile erfolgreich aktualisiert",
         "weeklyHoursTargetHelperText": "Zielarbeitsstunden für die Wochenfortschrittsberechnung",
-        "weeklyHoursTarget": "Zielarbeitsstunden"
+        "weeklyHoursTarget": "Zielarbeitsstunden",
+        "currentPasswordHelperText": "Wenn Sie Ihr Passwort vergessen haben, melden Sie sich ab und mit dem Master-Passwort an",
+        "passwordChangeSuccess": "Passwort erfolgreich geändert",
+        "passwordMismatch": "Passwörter stimmen nicht überein",
+        "passwordTooShort": "Passwort muss mindestens 6 Zeichen lang sein"
     },
     "dataView": {
         "noSessions": "Keine Arbeitszeiten gefunden. Beginnen Sie mit der Arbeit, um Ihren Verlauf zu sehen!",

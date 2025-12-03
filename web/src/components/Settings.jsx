@@ -10,7 +10,7 @@ import {
     Stack,
     Divider,
 } from '@mui/material';
-import { Save as SaveIcon } from '@mui/icons-material';
+import { Save as SaveIcon, Lock as LockIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
@@ -24,9 +24,17 @@ const Settings = () => {
         lastName: '',
         weeklyHoursTarget: 40,
     });
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+    });
     const [loading, setLoading] = useState(false);
+    const [passwordLoading, setPasswordLoading] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
+    const [passwordSuccess, setPasswordSuccess] = useState('');
+    const [passwordError, setPasswordError] = useState('');
     const { t } = useTranslation();
 
     useEffect(() => {
@@ -42,6 +50,14 @@ const Settings = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handlePasswordChange = (e) => {
+        const { name, value } = e.target;
+        setPasswordData(prev => ({
             ...prev,
             [name]: value
         }));
@@ -73,72 +89,186 @@ const Settings = () => {
         }
     };
 
+    const handlePasswordSubmit = async (e) => {
+        e.preventDefault();
+        setPasswordLoading(true);
+        setPasswordError('');
+        setPasswordSuccess('');
+
+        // Client-side validation
+        if (passwordData.newPassword.length < 6) {
+            setPasswordError(t("settings.passwordTooShort"));
+            setPasswordLoading(false);
+            return;
+        }
+
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            setPasswordError(t("settings.passwordMismatch"));
+            setPasswordLoading(false);
+            return;
+        }
+
+        try {
+            await axios.post(
+                `${API_URL}/api/auth/change-password`,
+                {
+                    currentPassword: passwordData.currentPassword,
+                    newPassword: passwordData.newPassword,
+                },
+                { withCredentials: true }
+            );
+
+            setPasswordSuccess(t("settings.passwordChangeSuccess"));
+            // Clear password fields
+            setPasswordData({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: '',
+            });
+        } catch (err) {
+            console.error('Error changing password:', err);
+            setPasswordError(err.response?.data?.error || 'Failed to change password');
+        } finally {
+            setPasswordLoading(false);
+        }
+    };
+
     return (
         <Box maxWidth="md" mx="auto">
+            <Stack spacing={3}>
+                {/* Profile Settings Card */}
+                <Card>
+                    <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                            {t("settings.profile")}
+                        </Typography>
+                        <Divider sx={{ mb: 3 }} />
 
-            <Card>
-                <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                        {t("settings.profile")}
-                    </Typography>
-                    <Divider sx={{ mb: 3 }} />
+                        {success && (
+                            <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
+                                {success}
+                            </Alert>
+                        )}
 
-                    {success && (
-                        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
-                            {success}
-                        </Alert>
-                    )}
+                        {error && (
+                            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+                                {error}
+                            </Alert>
+                        )}
 
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
-                            {error}
-                        </Alert>
-                    )}
+                        <form onSubmit={handleSubmit}>
+                            <Stack spacing={3}>
+                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                                    <TextField
+                                        label={t("settings.firstName")}
+                                        name="firstName"
+                                        value={formData.firstName}
+                                        onChange={handleChange}
+                                        fullWidth
+                                    />
+                                    <TextField
+                                        label={t("settings.lastName")}
+                                        name="lastName"
+                                        value={formData.lastName}
+                                        onChange={handleChange}
+                                        fullWidth
+                                    />
+                                </Stack>
 
-                    <form onSubmit={handleSubmit}>
-                        <Stack spacing={3}>
-                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                                 <TextField
-                                    label={t("settings.firstName")}
-                                    name="firstName"
-                                    value={formData.firstName}
+                                    label={t("settings.weeklyHoursTarget")}
+                                    name="weeklyHoursTarget"
+                                    type="number"
+                                    value={formData.weeklyHoursTarget}
                                     onChange={handleChange}
+                                    inputProps={{ min: 0, step: 0.5 }}
+                                    helperText={t("settings.weeklyHoursTargetHelperText")}
                                     fullWidth
                                 />
-                                <TextField
-                                    label={t("settings.lastName")}
-                                    name="lastName"
-                                    value={formData.lastName}
-                                    onChange={handleChange}
-                                    fullWidth
-                                />
+
+                                <Box display="flex" justifyContent="flex-end">
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        startIcon={<SaveIcon />}
+                                        disabled={loading}
+                                    >
+                                        {t("common.save")}
+                                    </Button>
+                                </Box>
                             </Stack>
+                        </form>
+                    </CardContent>
+                </Card>
 
-                            <TextField
-                                label={t("settings.weeklyHoursTarget")}
-                                name="weeklyHoursTarget"
-                                type="number"
-                                value={formData.weeklyHoursTarget}
-                                onChange={handleChange}
-                                inputProps={{ min: 0, step: 0.5 }}
-                                helperText={t("settings.weeklyHoursTargetHelperText")}
-                                fullWidth
-                            />
+                {/* Password Change Card */}
+                <Card>
+                    <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                            {t("settings.changePassword")}
+                        </Typography>
+                        <Divider sx={{ mb: 3 }} />
 
-                            <Box display="flex" justifyContent="flex-end">
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    startIcon={<SaveIcon />}
-                                    disabled={loading}
-                                >
-                                    {t("common.save")}
-                                </Button>
-                            </Box>
-                        </Stack>
-                    </form>
-                </CardContent>
-            </Card>
+                        {passwordSuccess && (
+                            <Alert severity="success" sx={{ mb: 3 }} onClose={() => setPasswordSuccess('')}>
+                                {passwordSuccess}
+                            </Alert>
+                        )}
+
+                        {passwordError && (
+                            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setPasswordError('')}>
+                                {passwordError}
+                            </Alert>
+                        )}
+
+                        <form onSubmit={handlePasswordSubmit}>
+                            <Stack spacing={3}>
+                                <TextField
+                                    label={t("settings.currentPassword")}
+                                    name="currentPassword"
+                                    type="password"
+                                    value={passwordData.currentPassword}
+                                    onChange={handlePasswordChange}
+                                    helperText={t("settings.currentPasswordHelperText")}
+                                    required
+                                    fullWidth
+                                />
+
+                                <TextField
+                                    label={t("settings.newPassword")}
+                                    name="newPassword"
+                                    type="password"
+                                    value={passwordData.newPassword}
+                                    onChange={handlePasswordChange}
+                                    required
+                                    fullWidth
+                                />
+
+                                <TextField
+                                    label={t("settings.confirmPassword")}
+                                    name="confirmPassword"
+                                    type="password"
+                                    value={passwordData.confirmPassword}
+                                    onChange={handlePasswordChange}
+                                    required
+                                    fullWidth
+                                />
+
+                                <Box display="flex" justifyContent="flex-end">
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        startIcon={<LockIcon />}
+                                        disabled={passwordLoading}
+                                    >
+                                        {t("settings.changePassword")}
+                                    </Button>
+                                </Box>
+                            </Stack>
+                        </form>
+                    </CardContent>
+                </Card>
+            </Stack>
         </Box>
     );
 };

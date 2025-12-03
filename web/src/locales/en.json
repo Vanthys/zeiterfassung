@@ -78,7 +78,11 @@
         "cancel": "Cancel",
         "profileSuccess": "Profile updated successfully",
         "weeklyHoursTargetHelperText": "Target hours for weekly progress calculation",
-        "weeklyHoursTarget": "Weekly Hours Target"
+        "weeklyHoursTarget": "Weekly Hours Target",
+        "currentPasswordHelperText": "If you forgot your password, log out and log in with the master password",
+        "passwordChangeSuccess": "Password changed successfully",
+        "passwordMismatch": "Passwords do not match",
+        "passwordTooShort": "Password must be at least 6 characters"
     },
     "companyOverview": {
         "title": "Company Overview",
